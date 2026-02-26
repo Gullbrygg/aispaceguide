@@ -1,0 +1,24 @@
+{
+  // Cloudflare Workers configuration for @opennextjs/cloudflare
+  "name": "theaiguide-ol2uu",
+  "account_id": "4f0c8f46ced2d310ba30ce69971b55eb",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Public environment variables (non-secret):
+  "vars": {
+    "NEXT_PUBLIC_SPACETIMEDB_HOST": "https://maincloud.spacetimedb.com",
+    "NEXT_PUBLIC_SPACETIMEDB_DB_NAME": "theaiguide-ol2uu",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWN0aXZlLW1vdXNlLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
+  }
+  // Secrets must be added via CLI or Cloudflare dashboard:
+  //   pnpm wrangler secret put CLERK_SECRET_KEY
+  // or: Workers & Pages > theaiguide-ol2uu > Settings > Variables & Secrets
+  
+  // run this command when updating the secret key for deployment on cloudflare workers
+  //echo "CLERK SECRET KEY" | pnpm wrangler secret put CLERK_SECRET_KEY 2>&1
+}

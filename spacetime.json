@@ -1,0 +1,9 @@
+{
+  "dev": {
+    "run": "pnpm run dev"
+  },
+  "_source-config": "spacetime.local.json",
+  "database": "theaiguide-ol2uu",
+  "server": "maincloud",
+  "module-path": "./spacetimedb"
+}
