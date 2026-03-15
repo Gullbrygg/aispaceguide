@@ -14,3 +14,5 @@ spacetime.local.json
 # Editor
 .cursor/
 .windsurfrules
+# clerk configuration (can include secrets)
+/.clerk/
