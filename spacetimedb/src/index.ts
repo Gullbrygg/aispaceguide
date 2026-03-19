@@ -1,14 +1,6 @@
-import { schema, table, t } from 'spacetimedb/server';
+import { t } from 'spacetimedb/server';
 
-const spacetimedb = schema({
-  person: table(
-    { public: true },
-    {
-      name: t.string(),
-    }
-  ),
-});
-export default spacetimedb;
+import spacetimedb from './schemas';
 
 export const init = spacetimedb.init(_ctx => {
   // Called when the module is initially published
