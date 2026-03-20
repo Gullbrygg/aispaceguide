@@ -11,5 +11,8 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  name: __t.string(),
+  identity: __t.identity().primaryKey(),
+  clerkId: __t.string().name("clerk_id"),
+  name: __t.option(__t.string()),
+  createdAt: __t.timestamp().name("created_at"),
 });
