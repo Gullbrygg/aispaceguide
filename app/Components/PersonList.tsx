@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { tables, reducers } from '../src/module_bindings';
+import { tables, reducers } from '../../src/module_bindings';
 import { useSpacetimeDB, useTable, useReducer } from 'spacetimedb/react';
 
 export function PersonList() {

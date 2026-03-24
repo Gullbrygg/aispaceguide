@@ -4,6 +4,7 @@ import spacetimedb from './schemas';
 
 export const init = spacetimedb.init(_ctx => {
   // Called when the module is initially published
+  _ctx.db.person.insert({name: "hehee"})
 });
 
 export const onConnect = spacetimedb.clientConnected(ctx => {
@@ -11,17 +12,27 @@ export const onConnect = spacetimedb.clientConnected(ctx => {
   if (jwt == null) {
     throw new SenderError('Unauthorized: JWT is required to connect');
   }
+  console.log(jwt);
+  // Restrict to your specific Clerk instance
+  if (jwt.issuer !== 'https://active-mouse-40.clerk.accounts.dev') {
 
-  // Only accept tokens issued by Clerk
-  if (!jwt.issuer.startsWith('https://clerk.')) {
     throw new SenderError(`Unauthorized: unexpected issuer ${jwt.issuer}`);
   }
 
+  // Check audience — ensures this token was minted FOR your app, not another
+  // Clerk's default session token audience is your Frontend API URL
+  // const expectedAudience = 'https://active-mouse-40.clerk.accounts.dev';
+  // const audiences = jwt.audience ?? [];
+  // if (!audiences.includes(expectedAudience)) {
+  //   console.log("AAAAAAAAAAA ======= Unauthorized: invalid audience: "+jwt.audience)
+  //   throw new SenderError(`Unauthorized: invalid audience ` + jwt.audience);
+  // }
+
   // Upsert user row — insert only on first connect
-  const existing = ctx.db.user.identity.find(ctx.sender);
+  const existing = ctx.db.user.id.find(ctx.sender);
   if (!existing) {
     ctx.db.user.insert({
-      identity: ctx.sender,
+      id: ctx.sender,
       clerkId: jwt.subject,
       name: undefined,
       createdAt: ctx.timestamp,
@@ -43,9 +54,9 @@ export const add = spacetimedb.reducer(
 export const set_user_profile = spacetimedb.reducer(
   { name: t.string() },
   (ctx, { name }) => {
-    const existing = ctx.db.user.identity.find(ctx.sender);
+    const existing = ctx.db.user.id.find(ctx.sender);
     if (!existing) throw new SenderError('User not found');
-    ctx.db.user.identity.update({ ...existing, name });
+    ctx.db.user.id.update({ ...existing, name });
   }
 );
 

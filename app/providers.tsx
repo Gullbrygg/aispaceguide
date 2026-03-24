@@ -28,6 +28,15 @@ const onConnectError = (_ctx: ErrorContext, err: Error) => {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const token = useClerkToken();
+  if (!token) return null;
+    try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('JWT payload being sent to SpacetimeDB:', payload);
+    console.log('Issuer (iss):', payload.iss);
+    console.log('Subject (sub):', payload.sub);
+  } catch (e) {
+    console.error('Failed to decode token:', e);
+  }
 
   const connectionBuilder = useMemo(
     () =>

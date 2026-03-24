@@ -16,3 +16,4 @@ spacetime.local.json
 .windsurfrules
 # clerk configuration (can include secrets)
 /.clerk/
+/spacetimedb/dist

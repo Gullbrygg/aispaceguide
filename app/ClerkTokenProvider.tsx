@@ -1,3 +1,4 @@
+"use client"
 import React, {
   createContext,
   useContext,
@@ -52,7 +53,7 @@ export function ClerkTokenProvider({
       try {
         // If you use a Clerk JWT template, use:
         // const t = await getToken({ template: "<YOUR_TEMPLATE_NAME>" });
-        const t = await getToken();
+        const t = await getToken({template: 'jwt-spacetime-aud'});
 
         if (!t) {
           throw new Error('Clerk returned no session token.');

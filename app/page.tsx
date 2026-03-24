@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+const aaa: string[] = [];
 // import { signup } from "@/app/actions/auth";
 export default function Home() {
   return (
