@@ -9,11 +9,13 @@ const spacetimedb = schema({
   ),
   // User ===
   user: table(
-    { public: true },
+    {  },
     {
       id: t.identity().primaryKey(),
       clerkId: t.string(),
       name: t.string().optional(),
+      email: t.string().optional(),
+      role: t.string().optional(),
       createdAt: t.timestamp(),
     }
   ),

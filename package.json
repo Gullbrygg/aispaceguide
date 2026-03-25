@@ -11,7 +11,7 @@
     "generate": "pnpm --dir spacetimedb install && cargo run -p gen-bindings -- --out-dir src/module_bindings --module-path spacetimedb && prettier --write src/module_bindings",
     "spacetime:generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path spacetimedb",
     "spacetime:publish:local": "spacetime publish theaiguide-ol2uu --module-path spacetimedb --server local --delete-data",
-    "spacetime:publish": "spacetime publish --module-path spacetimedb --server maincloud",
+    "spacetime:publish": "spacetime publish theaiguide-ol2uu --module-path spacetimedb --server maincloud",
     "build:cf": "opennextjs-cloudflare build",
     "preview:cf": "opennextjs-cloudflare preview",
     "deploy:cf": "opennextjs-cloudflare deploy"

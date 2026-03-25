@@ -15,11 +15,26 @@ export const Person = __t.object("Person", {
 });
 export type Person = __Infer<typeof Person>;
 
+export const StudyGroup = __t.object("StudyGroup", {
+  id: __t.u64(),
+  name: __t.string(),
+});
+export type StudyGroup = __Infer<typeof StudyGroup>;
+
 export const User = __t.object("User", {
-  identity: __t.identity(),
+  id: __t.identity(),
   clerkId: __t.string(),
   name: __t.option(__t.string()),
+  email: __t.option(__t.string()),
+  role: __t.option(__t.string()),
   createdAt: __t.timestamp(),
 });
 export type User = __Infer<typeof User>;
+
+export const UserGroup = __t.object("UserGroup", {
+  id: __t.u64(),
+  userId: __t.identity(),
+  groupId: __t.u64(),
+});
+export type UserGroup = __Infer<typeof UserGroup>;
 

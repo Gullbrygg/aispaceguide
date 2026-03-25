@@ -17,3 +17,5 @@ spacetime.local.json
 # clerk configuration (can include secrets)
 /.clerk/
 /spacetimedb/dist
+/src/module_bindings
+/src/module_bindings

@@ -52,16 +52,6 @@ importers:
         specifier: ^4.69.0
         version: 4.69.0
 
-  spacetimedb:
-    dependencies:
-      spacetimedb:
-        specifier: ^2.0.4
-        version: 2.0.4(react@18.3.1)
-    devDependencies:
-      typescript:
-        specifier: ~5.6.2
-        version: 5.6.3
-
 packages:
 
   '@alloc/quick-lru@5.2.0':
@@ -2168,29 +2158,6 @@ packages:
 
   spacetimedb@2.0.1:
     resolution: {integrity: sha512-19YkLz1P+JQDlYvlegDsn3YF4OsE2Pih31e5Xx/kobTExKwx/AtFWRUSA/EiRWvMV9jaIWzMhnsVfG+1fJ39Aw==}
-    peerDependencies:
-      '@angular/core': '>=17.0.0'
-      '@tanstack/react-query': ^5.0.0
-      react: ^18.0.0 || ^19.0.0-0 || ^19.0.0
-      svelte: ^4.0.0 || ^5.0.0
-      undici: ^6.19.2
-      vue: ^3.3.0
-    peerDependenciesMeta:
-      '@angular/core':
-        optional: true
-      '@tanstack/react-query':
-        optional: true
-      react:
-        optional: true
-      svelte:
-        optional: true
-      undici:
-        optional: true
-      vue:
-        optional: true
-
-  spacetimedb@2.0.4:
-    resolution: {integrity: sha512-7GiZerC9SKXvHvcaOLCgLEjFL4XOcG30k5f/ogA9QqBuD+tO/om6DfhIplo5dUg976gfqxr3Hsp5XtY2pPSCKw==}
     peerDependencies:
       '@angular/core': '>=17.0.0'
       '@tanstack/react-query': ^5.0.0
@@ -4876,19 +4843,6 @@ snapshots:
   source-map@0.6.1: {}
 
   spacetimedb@2.0.1(react@18.3.1):
-    dependencies:
-      base64-js: 1.5.1
-      headers-polyfill: 4.0.3
-      object-inspect: 1.13.4
-      prettier: 3.8.1
-      pure-rand: 7.0.1
-      safe-stable-stringify: 2.5.0
-      statuses: 2.0.2
-      url-polyfill: 1.1.14
-    optionalDependencies:
-      react: 18.3.1
-
-  spacetimedb@2.0.4(react@18.3.1):
     dependencies:
       base64-js: 1.5.1
       headers-polyfill: 4.0.3

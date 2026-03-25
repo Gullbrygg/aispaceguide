@@ -42,7 +42,8 @@ import SetUserProfileReducer from "./set_user_profile_reducer";
 
 // Import all table schema definitions
 import PersonRow from "./person_table";
-import UserRow from "./user_table";
+import StudyGroupRow from "./study_group_table";
+import UserGroupRow from "./user_group_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -55,17 +56,34 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, PersonRow),
-  user: __table({
-    name: 'user',
+  study_group: __table({
+    name: 'study_group',
     indexes: [
-      { name: 'identity', algorithm: 'btree', columns: [
-        'identity',
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
       ] },
     ],
     constraints: [
-      { name: 'user_identity_key', constraint: 'unique', columns: ['identity'] },
+      { name: 'study_group_id_key', constraint: 'unique', columns: ['id'] },
     ],
-  }, UserRow),
+  }, StudyGroupRow),
+  user_group: __table({
+    name: 'user_group',
+    indexes: [
+      { name: 'user_group_group_id', algorithm: 'btree', columns: [
+        'groupId',
+      ] },
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { name: 'user_group_user_id', algorithm: 'btree', columns: [
+        'userId',
+      ] },
+    ],
+    constraints: [
+      { name: 'user_group_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, UserGroupRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
