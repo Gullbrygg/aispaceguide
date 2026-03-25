@@ -20,12 +20,12 @@ export const onConnect = spacetimedb.clientConnected((ctx) => {
 
   // Check audience — ensures this token was minted FOR your app, not another
   // Clerk's default session token audience is your Frontend API URL
-  // const expectedAudience = 'https://active-mouse-40.clerk.accounts.dev';
-  // const audiences = jwt.audience ?? [];
-  // if (!audiences.includes(expectedAudience)) {
-  //   console.log("AAAAAAAAAAA ======= Unauthorized: invalid audience: "+jwt.audience)
+  const expectedAudience = 'https://active-mouse-40.clerk.accounts.dev';
+  const audiences = jwt.audience ?? [];
+  if (!audiences.includes(expectedAudience)) {
+    console.log("AAAAAAAAAAA ======= Unauthorized: invalid audience: "+jwt.audience)
   //   throw new SenderError(`Unauthorized: invalid audience ` + jwt.audience);
-  // }
+  }
 
   // Upsert user row — insert only on first connect
   const payload = jwt.fullPayload;
