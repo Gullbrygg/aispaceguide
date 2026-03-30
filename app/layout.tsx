@@ -38,7 +38,7 @@ export default function RootLayout({
           <ClerkTokenProvider>
             <Providers>
               <Header />
-              <main className="flex-1 w-full width-limit">{children}</main>
+              <main className="flex-1 w-full width-limit bg-gray-200">{children}</main>
               <Footer />
             </Providers>
           </ClerkTokenProvider>
