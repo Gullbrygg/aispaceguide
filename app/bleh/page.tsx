@@ -1,29 +1,42 @@
 import Link from "next/link";
 
-// import { signup } from "@/app/actions/auth";
 export default function Bleh() {
-    return (
-        <div className="justify-center flex flex-col items-center bg-gray-200 min-h-full width-limit">
-            {/* <form action={signup}> */}
-            <div className="flex justify-around gap-14 pt-5 break-all [&>*]:min-w-56 [&>*]:h-[55vh] [&>*]:py-2 [&>*]:border-2 [&>*]:rounded-md [&>*]:text-center">
-                <div className="">
-                    <div className="border-b-2 flex justify-center"><Link href={"/"} className="bg-white text-black w-fit hover:bg-purple-400 transition-all duration-200 rounded-md p-2 mb-2">Students</Link></div>
-                    <p className="">Skriv tekst her: TEST...TEST...TEST...TEST...TEST...TEST...TEST...</p>
-                </div>
-                <div>
-                    <div className="border-b-2 flex justify-center">
-                        <Link href={"/"} className="bg-purple-600 w-fit rounded-md p-2 mb-2">Teachers</Link></div>
-                    <p className="">Skriv tekst her: TEST...TEST...TEST...TEST...TEST...TEST...TEST...</p>
-                </div>
-                <div>
-                    <div className="border-b-2 flex justify-center"><Link href={"/"} className="bg-purple-600 w-fit rounded-md p-2 mb-2">Universitet</Link></div>
-                    <p className="">Skriv tekst her: TEST...TEST...TEST...TEST...TEST...TEST...TEST...</p>
-                </div>
-            </div>
-            <div className="min-w-[84vw] mt-5 min-h-[20vh] border-2 rounded-md">
+  return (
+    <div className="flex-1 -mx-[calc((100vw-100%)/2)] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse animation-delay-4000"></div>
+      </div>
 
-            </div>
-            {/* </form> */}
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto py-16">
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">Explore</h1>
+        <p className="text-xl md:text-2xl text-gray-300 mb-12">
+          Discover what GullBrygg has to offer for everyone.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <Link
+            href="/about/student"
+            className="bg-white/10 backdrop-blur-lg border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 shadow-lg w-full sm:w-auto"
+          >
+            Students
+          </Link>
+          <Link
+            href="/about/teacher"
+            className="bg-white/10 backdrop-blur-lg border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 shadow-lg w-full sm:w-auto"
+          >
+            Teachers
+          </Link>
+          <Link
+            href="/about/university"
+            className="bg-white/10 backdrop-blur-lg border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 shadow-lg w-full sm:w-auto"
+          >
+            Universities
+          </Link>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
