@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Teacher(){
     return (
       <>
-        <div className="justify-center flex flex-col items-center">
+        <div className="justify-center flex flex-col items-center bg-gray-200 min-h-full width-limit">
             {/* <form action={signup}> */}
             <div className="flex justify-around gap-14 pt-5 break-all [&>*]:min-w-56 [&>*]:h-[55vh] [&>*]:py-2 [&>*]:border-2 [&>*]:rounded-md [&>*]:text-center">
                 <div className="">

@@ -1,70 +1,159 @@
 "use client";
 
 import Link from "next/link";
-import { ClerkProvider, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+
+const NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/guidelines", label: "Guidelines" },
+  { href: "/quiz", label: "Quiz" },
+  { href: "/contact", label: "Contact" },
+  { href: "/about", label: "About" },
+];
 
 function Header() {
   const pathname = usePathname();
-
-  const navButton = (path: string) =>
-    `header-button ${pathname === path
-      ? "header-button-active"
-      : "header-button-default"
-    }`;
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="flex items-center justify-between h-20 width-limit">
-        <div className="grid grid-cols-5 w-full items-center justify-center">
+    <header className="sticky top-0 z-50 bg-gradient-to-r from-purple-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/20">
+      <div className="flex items-center h-18 width-limit">
 
-
+        {/* Logo — flex-1 so it takes equal space to the auth section */}
+        <div className="flex-1 flex items-center">
           <Link
-            href="/" // Linker tilbake til hjemmesiden
-            className="text-3xl font-semibold tracking-tight text-gray-800"
+            href="/"
+            className="text-2xl font-bold tracking-tight text-white hover:text-purple-200 transition-colors duration-300"
           >
-            AIGuidebook
+            <span className="bg-gradient-to-r from-purple-300 via-blue-200 to-indigo-300 bg-clip-text text-transparent">
+              AIGuidebook
+            </span>
           </Link>
+        </div>
 
-          <nav className="flex items-center gap-4 col-span-3">
+        {/* Desktop Nav — perfectly centered */}
+        <nav className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map(({ href, label }) => {
+            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={[
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  isActive
+                    ? "bg-white/15 text-white border border-white/25 shadow-md shadow-black/20 scale-105"
+                    : "text-gray-300 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95",
+                ].join(" ")}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
 
-            <Link href="/dashboard" className={navButton("/dashboard")}>
-              Dashboard
-            </Link>
-
-            <Link href="/guidelines" className={navButton("/guidelines")}>
-              Guidelines
-            </Link>
-
-            <Link href="/quiz" className={navButton("/quiz")}>
-              Quiz
-            </Link>
-
-            <Link href="/contact" className={navButton("/contact")}>
-              Contact
-            </Link>
-
-            <Link href="/about" className={navButton("/about")}>
-              About
-            </Link>
-
-          </nav>
-          <div className="flex items-center justify-center text-center">
+        {/* Auth + mobile toggle — flex-1 so it mirrors the logo width */}
+        <div className="flex-1 flex items-center justify-end gap-3">
+          {/* Desktop Auth */}
+          <div className="hidden md:flex items-center gap-3">
             <SignedOut>
-              <SignInButton />
+              <SignInButton>
+                <button className="px-4 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer">
+                  Sign In
+                </button>
+              </SignInButton>
               <SignUpButton>
-                <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
+                <button className="px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 shadow-md shadow-purple-900/40 hover:shadow-purple-700/50 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer">
                   Sign Up
                 </button>
               </SignUpButton>
             </SignedOut>
-            {/* Show the user button when the user is signed in */}
             <SignedIn>
-              <UserButton />
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "ring-2 ring-white/30 hover:ring-white/60 transition-all duration-300",
+                  },
+                }}
+              />
             </SignedIn>
+          </div>
+
+          {/* Mobile: show UserButton when signed in, hamburger always */}
+          <div className="flex md:hidden items-center gap-3">
+            <SignedIn>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "ring-2 ring-white/30 hover:ring-white/60 transition-all duration-300",
+                  },
+                }}
+              />
+            </SignedIn>
+            <button
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label="Toggle menu"
+              className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+            >
+              {mobileOpen ? (
+                /* X icon */
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                /* Hamburger icon */
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-white/10 bg-gradient-to-b from-purple-900/95 to-indigo-900/95 backdrop-blur-xl">
+          <nav className="flex flex-col gap-1 px-4 py-3">
+            {NAV_LINKS.map(({ href, label }) => {
+              const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={[
+                    "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-white/15 text-white border border-white/25"
+                      : "text-gray-300 hover:text-white hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Mobile Auth */}
+          <div className="flex items-center gap-3 px-4 py-3 border-t border-white/10">
+            <SignedOut>
+              <SignInButton>
+                <button className="flex-1 px-4 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 border border-white/20 transition-all duration-200 cursor-pointer">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton>
+                <button className="flex-1 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 transition-all duration-200 cursor-pointer">
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
