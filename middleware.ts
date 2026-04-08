@@ -1,7 +1,12 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isPublicRoute = createRouteMatcher([
-  '/',  // Excludes app/page.tsx (the root page)
+  '/',
+  '/about',
+  '/about/(.*)',
+  '/guidelines',
+  '/quiz',
+  '/contact',
   
 ]);
 

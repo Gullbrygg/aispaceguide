@@ -5,12 +5,16 @@ import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@cl
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
   { href: "/guidelines", label: "Guidelines" },
   { href: "/quiz", label: "Quiz" },
   { href: "/contact", label: "Contact" },
   { href: "/about", label: "About" },
+];
+
+const AUTH_NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 function Header() {
@@ -27,7 +31,7 @@ function Header() {
             href="/"
             className="text-2xl font-bold tracking-tight text-white hover:text-purple-200 transition-colors duration-300"
           >
-            <span className="bg-gradient-to-r from-purple-300 via-blue-200 to-indigo-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-300 via-blue-200 to-indigo-300 bg-clip-text text-transparent hover:opacity-80 transition-opacity duration-300">
               AIGuidebook
             </span>
           </Link>
@@ -44,14 +48,33 @@ function Header() {
                 className={[
                   "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
                   isActive
-                    ? "bg-white/15 text-white border border-white/25 shadow-md shadow-black/20 scale-105"
-                    : "text-gray-300 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95",
+                    ? "bg-white/15 text-white border border-white/25 shadow-md shadow-black/20"
+                    : "text-gray-300 border border-transparent hover:text-white hover:bg-white/10 hover:border-white/15",
                 ].join(" ")}
               >
                 {label}
               </Link>
             );
           })}
+          <SignedIn>
+            {AUTH_NAV_LINKS.map(({ href, label }) => {
+              const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={[
+                    "px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                    isActive
+                      ? "bg-white/15 text-white border border-white/25 shadow-md shadow-black/20"
+                      : "text-gray-300 border border-transparent hover:text-white hover:bg-white/10 hover:border-white/15",
+                  ].join(" ")}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </SignedIn>
         </nav>
 
         {/* Auth + mobile toggle — flex-1 so it mirrors the logo width */}
@@ -60,12 +83,12 @@ function Header() {
           <div className="hidden md:flex items-center gap-3">
             <SignedOut>
               <SignInButton>
-                <button className="px-4 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer">
+                <button className="px-4 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 border border-white/20 hover:border-white/40 transition-all duration-300 cursor-pointer">
                   Sign In
                 </button>
               </SignInButton>
               <SignUpButton>
-                <button className="px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 shadow-md shadow-purple-900/40 hover:shadow-purple-700/50 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer">
+                <button className="px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 shadow-md shadow-purple-900/40 hover:shadow-purple-700/50 transition-all duration-300 cursor-pointer">
                   Sign Up
                 </button>
               </SignUpButton>
@@ -135,6 +158,26 @@ function Header() {
                 </Link>
               );
             })}
+            <SignedIn>
+              {AUTH_NAV_LINKS.map(({ href, label }) => {
+                const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileOpen(false)}
+                    className={[
+                      "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-white/15 text-white border border-white/25"
+                        : "text-gray-300 hover:text-white hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </SignedIn>
           </nav>
 
           {/* Mobile Auth */}
