@@ -28,27 +28,35 @@ const onConnectError = (_ctx: ErrorContext, err: Error) => {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const token = useClerkToken();
-  if (!token) return null;
+
+  if (token) {
     try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log('JWT payload being sent to SpacetimeDB:', payload);
-    console.log('Issuer (iss):', payload.iss);
-    console.log('Subject (sub):', payload.sub);
-  } catch (e) {
-    console.error('Failed to decode token:', e);
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT payload being sent to SpacetimeDB:', payload);
+      console.log('Issuer (iss):', payload.iss);
+      console.log('Subject (sub):', payload.sub);
+    } catch (e) {
+      console.error('Failed to decode token:', e);
+    }
   }
 
   const connectionBuilder = useMemo(
     () =>
-      DbConnection.builder()
-        .withUri(HOST)
-        .withDatabaseName(DB_NAME)
-        .withToken(token)
-        .onConnect(onConnect)
-        .onDisconnect(onDisconnect)
-        .onConnectError(onConnectError),
+      token
+        ? DbConnection.builder()
+            .withUri(HOST)
+            .withDatabaseName(DB_NAME)
+            .withToken(token)
+            .onConnect(onConnect)
+            .onDisconnect(onDisconnect)
+            .onConnectError(onConnectError)
+        : null,
     [token]
   );
+
+  if (!connectionBuilder) {
+    return <>{children}</>;
+  }
 
   return (
     <SpacetimeDBProvider connectionBuilder={connectionBuilder}>

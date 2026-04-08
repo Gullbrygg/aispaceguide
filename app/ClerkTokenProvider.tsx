@@ -6,16 +6,12 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { useAuth, RedirectToSignIn } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 
 const TokenContext = createContext<string | undefined>(undefined);
 
 export function useClerkToken() {
-  const token = useContext(TokenContext);
-  if (!token) {
-    throw new Error('useClerkToken must be used within a ClerkTokenProvider');
-  }
-  return token;
+  return useContext(TokenContext);
 }
 
 /**
@@ -87,8 +83,10 @@ export function ClerkTokenProvider({
   }
 
   if (!isSignedIn) {
-    // Sends the user to Clerk sign-in. After sign-in, they return to the app.
-    return <RedirectToSignIn />;
+    // Not signed in — render children without a token (public pages still work)
+    return (
+      <TokenContext.Provider value={undefined}>{children}</TokenContext.Provider>
+    );
   }
 
   if (!token) {
