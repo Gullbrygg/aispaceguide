@@ -9,8 +9,6 @@ import { useState } from "react";
 const NAV_LINKS = [
   { href: "/guidelines", label: "Guidelines" },
   { href: "/quiz", label: "Quiz" },
-  { href: "/contact", label: "Contact" },
-  { href: "/about", label: "About" },
 ];
 
 const AUTH_NAV_LINKS = [
@@ -39,6 +37,7 @@ function Header() {
 
         {/* Desktop Nav — perfectly centered */}
         <nav className="hidden md:flex items-center gap-1">
+          <SignedOut>
           {NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
             return (
@@ -56,6 +55,7 @@ function Header() {
               </Link>
             );
           })}
+          </SignedOut>
           <SignedIn>
             {AUTH_NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
