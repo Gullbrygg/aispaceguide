@@ -1,200 +1,283 @@
-"use client"
-import React, { useState } from 'react';
+"use client";
 
+import { useState } from "react";
 
+export default function Quiz() {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [showResults, setShowResults] = useState(false);
 
-interface quizQuestions {
-    id: number;
-    question: string;
-    options: string[];
-    correctAnswer: number;
-    explanation: string;
-}
-
-const quizQuestions: quizQuestions[] = [
+  const questions = [
     {
-     id: 1,
-    question: "What is an appropriate use of AI tools like ChatGPT in academic work?",
-    options: [
-      "Writing your entire essay and submitting it as your own work",
-      "Using it to understand difficult concepts and get explanations",
-      "Having it complete all your homework assignments",
-      "Using it to take online exams"
-    ],
-    correctAnswer: 1,
-    explanation: "AI should be used as a learning aid to help you understand concepts better, not to replace your own work and learning process."
-  },
-  {
-    id: 2,
-    question: "If you use AI to help improve the grammar in your assignment, what should you do?",
-    options: [
-      "Nothing, it's just grammar correction",
-      "Cite the AI tool and explain how you used it",
-      "Keep it secret to avoid penalties",
-      "Only mention it if asked by the teacher"
-    ],
-    correctAnswer: 1,
-    explanation: "Transparency is key. You should always disclose AI assistance and cite it appropriately, even for grammar improvements."
-  },
-  {
-    id: 3,
-    question: "Which statement best describes the relationship between AI and critical thinking?",
-    options: [
-      "AI can replace the need for critical thinking",
-      "AI outputs should always be accepted without question",
-      "You should critically evaluate and verify AI-generated information",
-      "Critical thinking is only needed when AI is not available"
-    ],
-    correctAnswer: 2,
-    explanation: "AI can make mistakes and produce biased or incorrect information. You must always apply critical thinking and verify the information."
-  },
-  {
-    id: 4,
-    question: "What is the main risk of relying too heavily on AI for academic work?",
-    options: [
-      "It takes too much time to use AI tools",
-      "AI tools are too expensive for students",
-      "You may not develop your own skills and understanding",
-      "Teachers will always know when you use AI"
-    ],
-    correctAnswer: 2,
-    explanation: "Over-reliance on AI can prevent you from developing critical thinking skills, deep understanding, and independent problem-solving abilities."
-  },
-  {
-    id: 5,
-    question: "How should you approach AI-generated code for programming assignments?",
-    options: [
-      "Copy and paste it directly without modifications",
-      "Use it to understand the logic, then write your own implementation",
-      "Submit it as-is since it's correct code",
-      "Only use AI after you've completed the assignment"
-    ],
-    correctAnswer: 1,
-    explanation: "AI-generated code should be used as a learning tool to understand approaches and logic, but you should write and understand your own code."
-  },
-  {
-    id: 6,
-    question: "What is academic integrity in the context of AI use?",
-    options: [
-      "Never using AI tools under any circumstances",
-      "Using AI tools honestly, transparently, and within ethical boundaries",
-      "Only using AI when it's explicitly allowed by teachers",
-      "Keeping your AI usage secret to protect your grades"
-    ],
-    correctAnswer: 1,
-    explanation: "Academic integrity with AI means using it honestly and ethically, being transparent about its use, and ensuring it supports rather than replaces learning."
-  },
-  {
-    id: 7,
-    question: "When is it acceptable to use AI during an exam?",
-    options: [
-      "When the exam is particularly difficult",
-      "When other students are doing it",
-      "Only when explicitly permitted by the instructor",
-      "As long as you don't get caught"
-    ],
-    correctAnswer: 2,
-    explanation: "Using AI during exams without permission is cheating. Only use AI if the instructor explicitly allows it as part of the exam format."
-  },
-  {
-    id: 8,
-    question: "What's the best way to use AI for research paper writing?",
-    options: [
-      "Have AI write the entire paper based on your topic",
-      "Use AI to brainstorm ideas, outline structure, and check citations",
-      "Let AI find and summarize all your sources",
-      "Use AI to paraphrase existing papers to avoid plagiarism"
-    ],
-    correctAnswer: 1,
-    explanation: "AI works best as a brainstorming and organizational tool. You should do the actual research, critical analysis, and writing yourself."
-  },
-  {
-    id: 9,
-    question: "How can teachers effectively use AI in their teaching?",
-    options: [
-      "To grade all assignments automatically without review",
-      "To create personalized learning materials and explain concepts differently",
-      "To replace classroom lectures entirely",
-      "To monitor students' AI usage secretly"
-    ],
-    correctAnswer: 1,
-    explanation: "Teachers can use AI to enhance teaching through personalized content, alternative explanations, and creative lesson planning, while maintaining human oversight.",
-  },
-  {
-    id: 10,
-    question: "What should you do if you're unsure whether AI use is allowed for an assignment?",
-    options: [
-      "Use AI anyway and hope for the best",
-      "Ask your instructor for clarification before using AI",
-      "Check with other students and follow their lead",
-      "Avoid AI completely to be safe"
-    ],
-    correctAnswer: 1,
-    explanation: "When in doubt, always ask your instructor. Clear communication prevents misunderstandings and demonstrates academic integrity."
-}
-];
+      question: "Hva er ikke akseptabel bruk av ChatGPT i akademiske oppgaver?",
+      options: [
+        "Bruke det for å sjekke grammatikken din",
+        "Kopiere hele svaret direkte inn i oppgaven",
+        "Få hjelp til å forklare et konsept",
+        "Bruke det til å generere en outline",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hva er en AI-hallusinasjon?",
+      options: [
+        "Når AI bruker for mye RAM",
+        "Når AI genererer sannlytende, men falske informasjon",
+        "Når du hallusinerer mens du bruker AI",
+        "En sikkerhetsbrist i AI-systemer",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hvilken informasjon bør du ALDRI dele med AI-verktøy?",
+      options: [
+        "Spørsmål om akademiske emner",
+        "Personlig identifiseringsinformasjon eller sensitive data",
+        "Generelle spørsmål om verden",
+        "Alt er greit å delø",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hva bør du gjøre hvis AI gir deg et sitat eller tall?",
+      options: [
+        "Bruke det direkte uten verifikasjon",
+        "Spørre AI om kilder og deretter verifisere selv",
+        "Anta at det er riktig hvis det høres bra ut",
+        "Ikke bruke AI til statistikk i det hele tatt",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hva er algoritmeisk bias?",
+      options: [
+        "En positiv fordel av AI",
+        "Når AI favoriserer visse perspektiver basert på treningsdata",
+        "Når brukeren er forutinntatt",
+        "En form for sikkerhetsfeil",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hva er det viktigste å gjøre før du bruker AI til oppgaver?",
+      options: [
+        "Sjekk personvernpolicyen",
+        "Lese oppgavebeskrivelsen og retningslinjene fra læreren",
+        "Dele din klassekode",
+        "Kjøpe premium-versjonen",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hvordan burde du håndtere AI-genrert innhold i oppgaven din?",
+      options: [
+        "Presentere det som ditt eget arbeid",
+        "Parafrasere det og integrere det med ditt eget arbeid og kildekritikk",
+        "Ikke bruke AI i det hele tatt",
+        "Kopiere det og sitere ChatGPT som forfatter",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hva betyr det at AI-modeller trenes på mennesker?",
+      options: [
+        "AI er bare så smart som mennesker",
+        "AI kan arve bias og fordommer fra treningsdataene",
+        "Mennesker må kontrollere AI en gang i timen",
+        "AI og mennesker er identiske",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hvilken av disse er en god grunn til å bruke AI?",
+      options: [
+        "Unngå å gjøre ditt eget arbeid",
+        "Få inspirasjon som utgangspunkt for videre tenking",
+        "Bedra karakterer garantert",
+        "Lure læreren",
+      ],
+      correct: 1,
+    },
+    {
+      question: "Hvis du er usikker på om en AI-bruk er tillatt, hva bør du gjøre?",
+      options: [
+        "Bruke AI likevel fordi det er sannsynlig greit",
+        "Spørre læreren din direkte",
+        "Ikke bruke AI i det hele tatt",
+        "Håpe på det beste",
+      ],
+      correct: 1,
+    },
+  ];
 
-function QuizPage() {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedOption, setSelectedOption] = useState<number | null>(null);
-    const [showExplanation, setShowExplanation] = useState(false);
+  const handleAnswer = (index: number) => {
+    const newAnswers = { ...selectedAnswers, [currentQuestion]: index };
+    setSelectedAnswers(newAnswers);
 
-    const currentQuestion = quizQuestions[currentQuestionIndex];
-    const handleOptionSelect = (index: number) => {
-        setSelectedOption(index);
-        setShowExplanation(true);
-    };  
-    const handleNextQuestion = () => {
-        setSelectedOption(null);
-        setShowExplanation(false);
-        if (currentQuestionIndex < quizQuestions.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
-        } else {
-            alert("Quiz completed! Thank you for participating.");
-            setCurrentQuestionIndex(0); // Reset to the first question
-        }   };
-    return (    
-        <div className="max-w-2xl mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">AI Ethics Quiz</h1>
-            <div className="bg-white shadow-md rounded p-4">
-                <h2 className="text-lg font-semibold mb-2">{currentQuestion.question}</h2>
-                <ul className="space-y-2">
-                    {currentQuestion.options.map((option, index) => (
-                        <li key={index}>
-                            <button
-                                className={`w-full text-left px-4 py-2 border rounded ${selectedOption === index ? (index === currentQuestion.correctAnswer ? 'bg-green-200 border-green-400' : 'bg-red-200 border-red-400') : 'bg-gray-100 border-gray-300 hover:bg-gray-200'}`}
-                                onClick={() => handleOptionSelect(index)}
-                                disabled={selectedOption !== null}
-                            >
-                                {option}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-                {showExplanation && (
-                    <div className="mt-4 p-3 bg-gray-100 border-l-4 border-gray-300">
-                        <p className="font-semibold">{selectedOption === currentQuestion.correctAnswer ? "Correct!" : "Incorrect."}</p>
-                        <p>{currentQuestion.explanation}</p>
-                    </div>
-                )}
-                {selectedOption !== null && (
-                    <button
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
-                        onClick={handleNextQuestion}
-                    >
-                        Next Question   
-                    </button>
-                )}
+    if (index === questions[currentQuestion].correct) {
+      setScore(score + 1);
+    }
+
+    if (currentQuestion < questions.length - 1) {
+      setTimeout(() => setCurrentQuestion(currentQuestion + 1), 300);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  if (showResults) {
+    return (
+      <div className="w-full">
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50" />
+          <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 text-center">
+            <h1 className="text-apple-lg text-gray-900 mb-6">Quizresultat</h1>
+          </div>
+        </section>
+
+        <section className="py-20 px-6 sm:px-8 max-w-2xl mx-auto">
+          <div className="glass p-12 rounded-3xl text-center">
+            <div className="inline-block text-7xl mb-6">
+              {score >= 8 ? "🎉" : score >= 6 ? "👍" : "📚"}
             </div>
+            <h2 className="text-apple-md text-gray-900 mb-6">
+              Du fikk {score} av {questions.length} riktig!
+            </h2>
+            <div className="w-full bg-gray-200 rounded-full h-4 mb-8 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-500"
+                style={{ width: `${(score / questions.length) * 100}%` }}
+              />
+            </div>
+
+            <div className="space-y-4 mb-8">
+              {score >= 8 && (
+                <p className="text-lg text-gray-700">
+                  Utmerket arbeid! Du har solid forståelse for ansvarlig AI-bruk. 🌟
+                </p>
+              )}
+              {score >= 6 && score < 8 && (
+                <p className="text-lg text-gray-700">
+                  Bra jobba! Du forstår de fleste konseptene. Les gjerne på nytt noen seksjoner. 💡
+                </p>
+              )}
+              {score < 6 && (
+                <p className="text-lg text-gray-700">
+                  Det er greit! Gå tilbake til retningslinjene og test igjen senere. 📖
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setCurrentQuestion(0);
+                setScore(0);
+                setSelectedAnswers({});
+                setShowResults(false);
+              }}
+              className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-semibold hover:bg-blue-700 transition-all duration-300 hover:shadow-lg"
+            >
+              Ta quizen igjen
+            </button>
+          </div>
+
+          {/* Review */}
+          <div className="mt-20">
+            <h3 className="text-apple-md text-gray-900 mb-12">Gjennomgang av svar</h3>
+            <div className="space-y-4">
+              {questions.map((q, idx) => {
+                const userAnswer = selectedAnswers[idx];
+                const isCorrect = userAnswer === q.correct;
+                return (
+                  <div
+                    key={idx}
+                    className={`glass p-6 rounded-2xl border-l-4 ${
+                      isCorrect ? "border-green-500 bg-green-50/50" : "border-red-500 bg-red-50/50"
+                    }`}
+                  >
+                    <p className="font-bold text-gray-900 mb-3">{q.question}</p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-semibold">Ditt svar:</span> {q.options[userAnswer]}
+                      <span className={isCorrect ? "text-green-600" : "text-red-600"}>
+                        {" "}
+                        {isCorrect ? "✓" : "✗"}
+                      </span>
+                    </p>
+                    {!isCorrect && (
+                      <p className="text-sm text-gray-700">
+                        <span className="font-semibold text-green-600">Riktig svar:</span> {q.options[q.correct]}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50" />
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 text-center">
+          <h1 className="text-apple-lg text-gray-900 mb-6">AI-etikk Quiz</h1>
+          <p className="text-xl text-gray-700 font-light">
+            Test din kunnskap om ansvarlig AI-bruk
+          </p>
         </div>
-    );  
+      </section>
 
+      {/* Quiz */}
+      <section className="py-20 px-6 sm:px-8 max-w-2xl mx-auto">
+        {/* Progress */}
+        <div className="mb-12">
+          <div className="flex justify-between mb-4">
+            <span className="font-semibold text-gray-900">
+              Spørsmål {currentQuestion + 1} av {questions.length}
+            </span>
+            <span className="text-gray-600">{Math.round(((currentQuestion + 1) / questions.length) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
+              style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
 
-    
+        {/* Question */}
+        <div className="glass p-8 rounded-2xl mb-8">
+          <h2 className="text-apple-sm text-gray-900 mb-8">
+            {questions[currentQuestion].question}
+          </h2>
 
+          <div className="space-y-4">
+            {questions[currentQuestion].options.map((option, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleAnswer(idx)}
+                className="w-full text-left glass p-4 rounded-xl hover:bg-blue-100/50 hover:border-blue-300 transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-6 h-6 rounded-full border-2 border-gray-300 group-hover:border-blue-500 group-hover:bg-blue-100 transition-all flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-gray-600 group-hover:text-blue-600">
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                  </div>
+                  <span className="text-gray-900 group-hover:font-semibold transition-all">{option}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-
-
-
-export default QuizPage;

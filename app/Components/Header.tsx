@@ -1,68 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { ClerkProvider, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
 function Header() {
   const pathname = usePathname();
 
-  const navButton = (path: string) =>
-    `header-button ${pathname === path
-      ? "header-button-active"
-      : "header-button-default"
-    }`;
+  const navItems = [
+    { href: "/guidelines", label: "Retningslinjer" },
+    { href: "/faq", label: "Spørsmål & Svar" },
+    { href: "/quiz", label: "Quiz" },
+    { href: "/dashboard", label: "Læringssti" },
+  ];
 
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="flex items-center justify-between h-20 width-limit">
-        <div className="grid grid-cols-5 w-full items-center justify-center">
-
-
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
           <Link
-            href="/" // Linker tilbake til hjemmesiden
-            className="text-3xl font-semibold tracking-tight text-gray-800"
+            href="/"
+            className="flex items-center gap-3 group"
           >
-            AIGuidebook
+            <div className="text-3xl">✨</div>
+            <span className="text-2xl font-semibold text-slate-950 group-hover:text-slate-700 transition-colors">
+              AIGuidebook
+            </span>
           </Link>
 
-          <nav className="flex items-center gap-4 col-span-3">
-
-            <Link href="/dashboard" className={navButton("/dashboard")}>
-              Dashboard
-            </Link>
-
-            <Link href="/guidelines" className={navButton("/guidelines")}>
-              Guidelines
-            </Link>
-
-            <Link href="/quiz" className={navButton("/quiz")}>
-              Quiz
-            </Link>
-
-            <Link href="/contact" className={navButton("/contact")}>
-              Contact
-            </Link>
-
-            <Link href="/about" className={navButton("/about")}>
-              About
-            </Link>
-
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-300 ${
+                  pathname === item.href
+                    ? "text-slate-950 bg-slate-100"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
-          <div className="flex items-center justify-center text-center">
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton>
-                <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </SignedOut>
-            {/* Show the user button when the user is signed in */}
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </div>
+
+          {/* Mobile Menu Button */}
+          <button className="md:hidden text-2xl text-slate-700 hover:text-slate-950 transition-colors">☰</button>
         </div>
       </div>
     </header>

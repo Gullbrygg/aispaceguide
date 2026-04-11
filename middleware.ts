@@ -1,19 +1,7 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  '/',  // Excludes app/page.tsx (the root page)
-  
-]);
+export default function middleware(request: Request) {
+  return NextResponse.next();
+}
 
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-  }
-});
-
-export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
-};
+// Middleware is currently a no-op. Re-enable authentication logic when needed.
