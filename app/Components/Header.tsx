@@ -7,8 +7,9 @@ import { useState } from "react";
 
 
 const NAV_LINKS = [
-  { href: "/guidelines", label: "Guidelines" },
-  { href: "/quiz", label: "Quiz" },
+    { href: "/guidelines", label: "Retningslinjer" },
+    { href: "/faq", label: "Spørsmål & Svar" },
+    { href: "/quiz", label: "Quiz" }
 ];
 
 const AUTH_NAV_LINKS = [
