@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className="">
+      <html lang="en" className="" data-theme="">
         <head>
           <title>AI Guide Book</title>
         </head>

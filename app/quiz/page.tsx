@@ -154,22 +154,15 @@ function QuizPage() {
             setCurrentQuestionIndex(0); // Reset to the first question
         }   };
     return (
-        <div className="flex-1 -mx-[calc((100vw-100%)/2)] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col items-center justify-center relative overflow-hidden">
-            {/* Animated background elements */}
-            <div className="absolute inset-0">
-                <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-                <div className="absolute top-3/4 right-1/4 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse animation-delay-4000"></div>
-            </div>
-
-            <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-16">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 text-center">AI Ethics Quiz</h1>
-                <p className="text-gray-300 text-center mb-8">
+        <div className="flex-1 -mx-[calc((100vw-100%)/2)] bg-bg flex flex-col items-center justify-center">
+            <div className="w-full max-w-2xl mx-auto px-6 py-16">
+                <h1 className="text-4xl md:text-5xl font-bold text-fg mb-2 text-center tracking-tight">AI Ethics Quiz</h1>
+                <p className="text-muted text-center mb-8">
                     Question {currentQuestionIndex + 1} of {quizQuestions.length}
                 </p>
 
-                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6">
-                    <h2 className="text-lg font-semibold mb-4 text-white">{currentQuestion.question}</h2>
+                <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+                    <h2 className="text-lg font-semibold mb-4 text-fg">{currentQuestion.question}</h2>
                     <ul className="space-y-3">
                         {currentQuestion.options.map((option, index) => (
                             <li key={index}>
@@ -177,9 +170,9 @@ function QuizPage() {
                                     className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${
                                         selectedOption === index
                                             ? index === currentQuestion.correctAnswer
-                                                ? 'bg-green-500/30 border-green-400 text-white'
-                                                : 'bg-red-500/30 border-red-400 text-white'
-                                            : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/20'
+                                                ? 'bg-success-bg border-success text-fg'
+                                                : 'bg-error-bg border-error text-fg'
+                                            : 'bg-bg border-border text-fg hover:bg-surface-hover hover:border-accent'
                                     }`}
                                     onClick={() => handleOptionSelect(index)}
                                     disabled={selectedOption !== null}
@@ -190,14 +183,14 @@ function QuizPage() {
                         ))}
                     </ul>
                     {showExplanation && (
-                        <div className="mt-4 p-4 bg-white/10 border-l-4 border-white/40 rounded-r-lg">
-                            <p className="font-semibold text-white">{selectedOption === currentQuestion.correctAnswer ? "✅ Correct!" : "❌ Incorrect."}</p>
-                            <p className="text-gray-300 mt-1">{currentQuestion.explanation}</p>
+                        <div className="mt-4 p-4 bg-accent-tint border-l-4 border-accent rounded-r-lg">
+                            <p className="font-semibold text-fg">{selectedOption === currentQuestion.correctAnswer ? "✅ Correct!" : "❌ Incorrect."}</p>
+                            <p className="text-muted mt-1">{currentQuestion.explanation}</p>
                         </div>
                     )}
                     {selectedOption !== null && (
                         <button
-                            className="mt-4 px-6 py-3 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-xl font-semibold hover:bg-white/20 hover:scale-105 transition-all duration-300"
+                            className="mt-4 px-6 py-3 bg-accent text-accent-fg rounded-lg font-semibold hover:bg-accent-hover transition-colors duration-200"
                             onClick={handleNextQuestion}
                         >
                             {currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question →' : 'Finish Quiz'}

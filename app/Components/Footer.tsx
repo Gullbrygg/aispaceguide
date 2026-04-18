@@ -7,13 +7,13 @@ const FOOTER_LINKS = [
 
 function Footer() {
   return (
-    <footer className="bg-gradient-to-l from-purple-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-xl border-t border-white/10">
+    <footer className="bg-chrome border-t border-border-chrome">
       <div className="width-limit py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
 
         {/* Brand */}
         <Link
           href="/"
-          className="text-lg font-bold bg-gradient-to-r from-purple-300 via-blue-200 to-indigo-300 bg-clip-text text-transparent hover:opacity-80 transition-opacity duration-300"
+          className="text-base font-semibold text-accent-fg hover:text-accent-hover transition-colors duration-200"
         >
           AIGuidebook
         </Link>
@@ -24,7 +24,7 @@ function Footer() {
             <Link
               key={href}
               href={href}
-              className="px-3 py-1.5 rounded-full text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 active:scale-95"
+              className="px-3 py-1.5 text-sm text-muted hover:text-accent-fg transition-colors duration-200"
             >
               {label}
             </Link>
@@ -32,7 +32,7 @@ function Footer() {
         </nav>
 
         {/* Copyright */}
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-subtle">
           &copy; {new Date().getFullYear()} Gullbrygg
         </p>
 
