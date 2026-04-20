@@ -32,8 +32,8 @@ function Footer() {
         </nav>
 
         {/* Copyright */}
-        <p className="text-sm text-subtle">
-          &copy; {new Date().getFullYear()} Gullbrygg
+        <p className="text-sm text-muted">
+          &copy; {new Date().getFullYear()} AIGuidebook
         </p>
 
       </div>

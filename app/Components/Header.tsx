@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 
 const NAV_LINKS = [
-    { href: "/guidelines", label: "Retningslinjer" },
-    { href: "/faq", label: "Spørsmål & Svar" },
-    { href: "/quiz", label: "Quiz" }
+  { href: "/guidelines", label: "Retningslinjer" },
+  { href: "/faq", label: "Spørsmål & Svar" },
+  { href: "/quiz", label: "Quiz" },
 ];
 
 const AUTH_NAV_LINKS = [
@@ -19,25 +18,38 @@ const AUTH_NAV_LINKS = [
 function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-chrome border-b border-border-chrome shadow-sm">
-      <div className="flex items-center h-18 width-limit">
+    <header
+      className={[
+        "sticky top-0 z-50 bg-white transition-all duration-300",
+        scrolled
+          ? "border-b border-gray-100 shadow-[0_1px_20px_rgba(0,0,0,0.06)]"
+          : "border-b border-gray-100",
+      ].join(" ")}
+    >
+      <div className="flex items-center h-16 width-limit">
 
-        {/* Logo — flex-1 so it takes equal space to the auth section */}
-        <div className="flex-1 flex items-center justify-center md:justify-start">
+        {/* Logo */}
+        <div className="flex-1 flex items-center">
           <Link
             href="/"
-            className="text-xl font-semibold tracking-tight text-accent-fg
-             hover:text-accent-hover transition-colors duration-200 text-center md:text-left"
+            className="text-lg font-semibold tracking-tight text-gray-950 hover:text-blue-600 transition-colors duration-200"
+            style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}
           >
             AIGuidebook
           </Link>
         </div>
 
-        {/* Desktop Nav — perfectly centered */}
-        <nav className="hidden md:flex items-center gap-1">
-          <SignedOut>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-0.5">
           {NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
             return (
@@ -45,17 +57,16 @@ function Header() {
                 key={href}
                 href={href}
                 className={[
-                  "px-4 py-2 text-sm font-medium transition-colors duration-200",
+                  "relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200",
                   isActive
-                    ? "text-accent-fg border-b-2 border-accent"
-                    : "text-muted hover:text-accent-fg",
+                    ? "text-gray-950 bg-gray-100"
+                    : "text-gray-500 hover:text-gray-950 hover:bg-gray-50",
                 ].join(" ")}
               >
                 {label}
               </Link>
             );
           })}
-          </SignedOut>
           <SignedIn>
             {AUTH_NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -64,10 +75,10 @@ function Header() {
                   key={href}
                   href={href}
                   className={[
-                    "px-4 py-2 text-sm font-medium transition-colors duration-200",
+                    "relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200",
                     isActive
-                      ? "text-accent-fg border-b-2 border-accent"
-                      : "text-muted hover:text-accent-fg",
+                      ? "text-gray-950 bg-gray-100"
+                      : "text-gray-500 hover:text-gray-950 hover:bg-gray-50",
                   ].join(" ")}
                 >
                   {label}
@@ -77,40 +88,42 @@ function Header() {
           </SignedIn>
         </nav>
 
-        {/* Auth + mobile toggle — flex-1 so it mirrors the logo width */}
-        <div className="flex-1 flex items-center justify-end gap-3">
-          {/* Desktop Auth */}
-          <div className="hidden md:flex items-center gap-3">
+        {/* Auth buttons */}
+        <div className="flex-1 flex items-center justify-end gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <SignedOut>
               <SignInButton>
-                <button className="px-4 py-2 rounded-md text-sm font-medium text-muted hover:text-accent-fg border border-border-chrome hover:border-muted transition-all duration-200 cursor-pointer">
-                  Sign In
+                <button className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-950 hover:bg-gray-100 transition-all duration-200 cursor-pointer">
+                  Logg inn
                 </button>
               </SignInButton>
               <SignUpButton>
-                <button className="px-4 py-2 rounded-md text-sm font-semibold text-accent-fg bg-accent hover:bg-accent-hover transition-colors duration-200 cursor-pointer">
-                  Sign Up
+                <button className="px-4 py-2 rounded-full text-sm font-semibold text-white bg-gray-950 hover:bg-gray-800 transition-all duration-200 cursor-pointer shadow-sm">
+                  Kom i gang
                 </button>
               </SignUpButton>
             </SignedOut>
             <SignedIn>
               <UserButton
+                afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "ring-2 ring-border-chrome hover:ring-accent transition-all duration-200",
+                    avatarBox: "w-8 h-8 rounded-full ring-2 ring-gray-200 hover:ring-blue-400 transition-all duration-200",
+                    userButtonPopoverCard: "shadow-xl border border-gray-100",
                   },
                 }}
               />
             </SignedIn>
           </div>
 
-          {/* Mobile: show UserButton when signed in, hamburger always */}
-          <div className="flex md:hidden items-center gap-3">
+          {/* Mobile */}
+          <div className="flex md:hidden items-center gap-2">
             <SignedIn>
               <UserButton
+                afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "ring-2 ring-border-chrome hover:ring-accent transition-all duration-200",
+                    avatarBox: "w-8 h-8 rounded-full ring-2 ring-gray-200",
                   },
                 }}
               />
@@ -118,16 +131,14 @@ function Header() {
             <button
               onClick={() => setMobileOpen((o) => !o)}
               aria-label="Toggle menu"
-              className="p-2 rounded-md text-muted hover:text-accent-fg hover:bg-chrome-muted transition-all duration-200"
+              className="p-2 rounded-full text-gray-500 hover:text-gray-950 hover:bg-gray-100 transition-all duration-200"
             >
               {mobileOpen ? (
-                /* X icon */
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                /* Hamburger icon */
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -138,8 +149,8 @@ function Header() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border-chrome bg-chrome">
-          <nav className="flex flex-col gap-1 px-4 py-3 text-center">
+        <div className="md:hidden border-t border-gray-100 bg-white">
+          <nav className="flex flex-col px-4 py-2">
             {NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
               return (
@@ -148,10 +159,10 @@ function Header() {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={[
-                    "px-4 py-3 rounded-md text-sm font-medium transition-colors duration-200",
+                    "px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200",
                     isActive
-                      ? "bg-chrome-muted text-accent-fg"
-                      : "text-muted hover:text-accent-fg hover:bg-chrome-muted",
+                      ? "bg-gray-100 text-gray-950"
+                      : "text-gray-500 hover:text-gray-950 hover:bg-gray-50",
                   ].join(" ")}
                 >
                   {label}
@@ -167,10 +178,10 @@ function Header() {
                     href={href}
                     onClick={() => setMobileOpen(false)}
                     className={[
-                      "px-4 py-3 rounded-md text-sm font-medium transition-colors duration-200",
+                      "px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200",
                       isActive
-                        ? "bg-chrome-muted text-accent-fg"
-                        : "text-muted hover:text-accent-fg hover:bg-chrome-muted",
+                        ? "bg-gray-100 text-gray-950"
+                        : "text-gray-500 hover:text-gray-950 hover:bg-gray-50",
                     ].join(" ")}
                   >
                     {label}
@@ -179,18 +190,16 @@ function Header() {
               })}
             </SignedIn>
           </nav>
-
-          {/* Mobile Auth */}
-          <div className="flex items-center gap-3 px-4 py-3 border-t border-border-chrome">
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
             <SignedOut>
               <SignInButton>
-                <button className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-muted hover:text-accent-fg border border-border-chrome hover:border-muted transition-all duration-200 cursor-pointer">
-                  Sign In
+                <button className="flex-1 px-4 py-2 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer">
+                  Logg inn
                 </button>
               </SignInButton>
               <SignUpButton>
-                <button className="flex-1 px-4 py-2 rounded-md text-sm font-semibold text-accent-fg bg-accent hover:bg-accent-hover transition-colors duration-200 cursor-pointer">
-                  Sign Up
+                <button className="flex-1 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gray-950 hover:bg-gray-800 transition-all cursor-pointer">
+                  Kom i gang
                 </button>
               </SignUpButton>
             </SignedOut>
