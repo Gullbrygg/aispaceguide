@@ -11,8 +11,8 @@
     "build:cf": "opennextjs-cloudflare build",
     "preview:cf": "opennextjs-cloudflare preview",
     "deploy:cf": "opennextjs-cloudflare deploy",
-    "generate": "pnpm --dir spacetimedb install && cargo run -p gen-bindings -- --out-dir src/module_bindings --module-path spacetimedb && prettier --write src/module_bindings",
-    "spacetime:generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path spacetimedb",
+    "generate": "pnpm --dir spacetimedb install && cargo run -p gen-bindings -- --out-dir src/module_bindings --module-path spacetimedb && node scripts/patch-spacetimedb-bindings.mjs && prettier --write src/module_bindings",
+    "spacetime:generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path spacetimedb && node scripts/patch-spacetimedb-bindings.mjs",
     "spacetime:publish:local": "spacetime publish theaiguide-ol2uu --module-path spacetimedb --server local --delete-data",
     "spacetime:publish": "spacetime publish theaiguide-ol2uu --module-path spacetimedb --server maincloud"
   },
@@ -23,7 +23,7 @@
     "postcss": "^8.5.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "spacetimedb": "^2.0.1",
+    "spacetimedb": "2.1.0",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
