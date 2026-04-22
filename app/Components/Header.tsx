@@ -35,10 +35,10 @@ function Header() {
           : "border-b border-gray-100",
       ].join(" ")}
     >
-      <div className="flex items-center h-16 width-limit">
+      <div className="flex justify-center items-center h-16 width-limit">
 
         {/* Logo */}
-        <div className="flex-1 flex items-center">
+        <div className="flex-1 items-center">
           <Link
             href="/"
             className="text-lg font-semibold tracking-tight text-gray-950 hover:text-blue-600 transition-colors duration-200"
