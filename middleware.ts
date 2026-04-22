@@ -15,6 +15,7 @@ const suspiciousPathMatchers: RegExp[] = [
   /^\/chunks(?:\/|$)/i,
   /^\/dist(?:\/|$)/i,
   /^\/components(?:\/|$)/i,
+  /^\/\.git\/config$/i,
   /^\/\.env(?:$|\.)/i,
   /^\/boaform\/admin\/formlogin$/i,
   /^\/vendor\/phpunit(?:\/|$)/i,
@@ -58,7 +59,6 @@ function banIp(ip: string): void {
   tempBannedIps.set(ip, Date.now() + TEMP_BAN_DURATION_MS);
 }
 
-// '(./)' for wildcards
 const isPublicRoute = createRouteMatcher([
   '/(.*)',
   '/about',
