@@ -7,10 +7,20 @@ import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
 import AddReducer from "../add_reducer";
+import CreateChatInviteReducer from "../create_chat_invite_reducer";
+import CreateChatSessionReducer from "../create_chat_session_reducer";
+import InviteUserToChatReducer from "../invite_user_to_chat_reducer";
+import JoinChatWithInviteCodeReducer from "../join_chat_with_invite_code_reducer";
+import SaveChatMessageReducer from "../save_chat_message_reducer";
 import SayHelloReducer from "../say_hello_reducer";
 import SetUserProfileReducer from "../set_user_profile_reducer";
 
 export type AddParams = __Infer<typeof AddReducer>;
+export type CreateChatInviteParams = __Infer<typeof CreateChatInviteReducer>;
+export type CreateChatSessionParams = __Infer<typeof CreateChatSessionReducer>;
+export type InviteUserToChatParams = __Infer<typeof InviteUserToChatReducer>;
+export type JoinChatWithInviteCodeParams = __Infer<typeof JoinChatWithInviteCodeReducer>;
+export type SaveChatMessageParams = __Infer<typeof SaveChatMessageReducer>;
 export type SayHelloParams = __Infer<typeof SayHelloReducer>;
 export type SetUserProfileParams = __Infer<typeof SetUserProfileReducer>;
 

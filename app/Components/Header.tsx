@@ -9,10 +9,11 @@ const NAV_LINKS = [
   { href: "/guidelines", label: "Retningslinjer" },
   { href: "/faq", label: "Spørsmål & Svar" },
   { href: "/quiz", label: "Quiz" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 const AUTH_NAV_LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/chat", label: "Chat" },
 ];
 
 function Header() {

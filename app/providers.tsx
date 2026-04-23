@@ -11,11 +11,20 @@ const HOST =
 const DB_NAME =
   process.env.NEXT_PUBLIC_SPACETIMEDB_DB_NAME ?? 'theaiguide-ol2uu';
 
-const onConnect = (_conn: DbConnection, identity: Identity) => {
+const onConnect = (conn: DbConnection, identity: Identity) => {
   console.log(
     'Connected to SpacetimeDB with identity:',
     identity.toHexString()
   );
+
+  // Subscribe to all relevant views
+  conn.subscriptionBuilder().subscribe([
+    'SELECT * FROM my_chat_session',
+    'SELECT * FROM my_chat_message',
+    'SELECT * FROM person',
+    'SELECT * FROM study_group',
+    'SELECT * FROM user_group'
+  ]);
 };
 
 const onDisconnect = () => {

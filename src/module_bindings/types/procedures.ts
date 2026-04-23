@@ -6,5 +6,11 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all procedure arg schemas
+import * as GetAccessibleChatMessagesProcedure from "../get_accessible_chat_messages_procedure";
+import * as GetAccessibleChatSessionsProcedure from "../get_accessible_chat_sessions_procedure";
 
+export type GetAccessibleChatMessagesArgs = __Infer<typeof GetAccessibleChatMessagesProcedure.params>;
+export type GetAccessibleChatMessagesResult = __Infer<typeof GetAccessibleChatMessagesProcedure.returnType>;
+export type GetAccessibleChatSessionsArgs = __Infer<typeof GetAccessibleChatSessionsProcedure.params>;
+export type GetAccessibleChatSessionsResult = __Infer<typeof GetAccessibleChatSessionsProcedure.returnType>;
 

@@ -35,10 +35,17 @@ import {
 
 // Import all reducer arg schemas
 import AddReducer from "./add_reducer";
+import CreateChatInviteReducer from "./create_chat_invite_reducer";
+import CreateChatSessionReducer from "./create_chat_session_reducer";
+import InviteUserToChatReducer from "./invite_user_to_chat_reducer";
+import JoinChatWithInviteCodeReducer from "./join_chat_with_invite_code_reducer";
+import SaveChatMessageReducer from "./save_chat_message_reducer";
 import SayHelloReducer from "./say_hello_reducer";
 import SetUserProfileReducer from "./set_user_profile_reducer";
 
 // Import all procedure arg schemas
+import * as GetAccessibleChatMessagesProcedure from "./get_accessible_chat_messages_procedure";
+import * as GetAccessibleChatSessionsProcedure from "./get_accessible_chat_sessions_procedure";
 
 // Import all table schema definitions
 import PersonRow from "./person_table";
@@ -89,12 +96,19 @@ const tablesSchema = __schema({
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
   __reducerSchema("add", AddReducer),
+  __reducerSchema("create_chat_invite", CreateChatInviteReducer),
+  __reducerSchema("create_chat_session", CreateChatSessionReducer),
+  __reducerSchema("invite_user_to_chat", InviteUserToChatReducer),
+  __reducerSchema("join_chat_with_invite_code", JoinChatWithInviteCodeReducer),
+  __reducerSchema("save_chat_message", SaveChatMessageReducer),
   __reducerSchema("say_hello", SayHelloReducer),
   __reducerSchema("set_user_profile", SetUserProfileReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
 const proceduresSchema = __procedures(
+  __procedureSchema("get_accessible_chat_messages", GetAccessibleChatMessagesProcedure.params, GetAccessibleChatMessagesProcedure.returnType),
+  __procedureSchema("get_accessible_chat_sessions", GetAccessibleChatSessionsProcedure.params, GetAccessibleChatSessionsProcedure.returnType),
 );
 
 /** The remote SpacetimeDB module schema, both runtime and type information. */

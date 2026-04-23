@@ -11,6 +11,8 @@ const suspiciousPathMatchers: RegExp[] = [
   /^\/wp-admin(?:\/|$)/i,
   /^\/xmlrpc\.php$/i,
   /^\/phpmyadmin(?:\/|$)/i,
+  /^\/%22\/_next\/static\/chunks(?:\/|$)/i,
+  /^\/(?:aws[-.]?config|config)\.js$/i,
   /^\/node_modules(?:\/|$)/i,
   /^\/chunks(?:\/|$)/i,
   /^\/dist(?:\/|$)/i,
@@ -60,12 +62,13 @@ function banIp(ip: string): void {
 }
 
 const isPublicRoute = createRouteMatcher([
-  '/(.*)',
+  '/',
   '/about',
   '/about/(.*)',
   '/guidelines',
   '/quiz',
   '/contact',
+  '/dashboard',
 
 ]);
 

@@ -10,6 +10,48 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+export const ChatMessage = __t.object("ChatMessage", {
+  id: __t.u64(),
+  sessionId: __t.u64(),
+  ownerId: __t.identity(),
+  role: __t.string(),
+  content: __t.string(),
+  inputTokens: __t.option(__t.u64()),
+  outputTokens: __t.option(__t.u64()),
+  createdAt: __t.timestamp(),
+});
+export type ChatMessage = __Infer<typeof ChatMessage>;
+
+export const ChatSession = __t.object("ChatSession", {
+  id: __t.u64(),
+  ownerId: __t.identity(),
+  clientRequestId: __t.option(__t.string()),
+  title: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type ChatSession = __Infer<typeof ChatSession>;
+
+export const ChatSessionInvite = __t.object("ChatSessionInvite", {
+  id: __t.u64(),
+  sessionId: __t.u64(),
+  code: __t.string(),
+  createdBy: __t.identity(),
+  createdAt: __t.timestamp(),
+  usedBy: __t.option(__t.identity()),
+  usedAt: __t.option(__t.timestamp()),
+});
+export type ChatSessionInvite = __Infer<typeof ChatSessionInvite>;
+
+export const ChatSessionMember = __t.object("ChatSessionMember", {
+  id: __t.u64(),
+  sessionId: __t.u64(),
+  userId: __t.identity(),
+  invitedBy: __t.identity(),
+  invitedAt: __t.timestamp(),
+});
+export type ChatSessionMember = __Infer<typeof ChatSessionMember>;
+
 export const Person = __t.object("Person", {
   name: __t.string(),
 });

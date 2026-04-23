@@ -1,0 +1,479 @@
+'use client';
+
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
+import type { ChatMessage, ChatSession } from '@/src/module_bindings/types';
+import { useSpacetimeDB } from 'spacetimedb/react';
+
+type ChatMessageInput = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
+
+function formatTimestampMicros(micros: bigint): string {
+  const date = new Date(Number(micros / 1000n));
+  return date.toLocaleString();
+}
+
+export default function ChatPage() {
+  const conn = useSpacetimeDB();
+
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [input, setInput] = useState('');
+  const [inviteCodeInput, setInviteCodeInput] = useState('');
+  const [latestInviteCode, setLatestInviteCode] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [streamingAssistantText, setStreamingAssistantText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [lastDroppedCount, setLastDroppedCount] = useState<number>(0);
+
+  const sessionsRef = useRef(chatSessions);
+  sessionsRef.current = chatSessions;
+
+  const mySessions = useMemo(() => {
+    return [...chatSessions]
+      .sort((a, b) => Number(b.updatedAt.microsSinceUnixEpoch - a.updatedAt.microsSinceUnixEpoch));
+  }, [chatSessions]);
+
+  const myMessages = useMemo(() => {
+    return [...chatMessages].sort((a, b) => Number(a.createdAt.microsSinceUnixEpoch - b.createdAt.microsSinceUnixEpoch));
+  }, [chatMessages]);
+
+  function getConnectionOrThrow() {
+    const liveConnection = conn.getConnection() as any;
+    if (!liveConnection) {
+      throw new Error('SpacetimeDB is not connected yet');
+    }
+    return liveConnection;
+  }
+
+  function callReducer(camelName: string, snakeName: string, args: Record<string, unknown>) {
+    const liveConnection = getConnectionOrThrow();
+    const reducerMap = liveConnection.reducers as Record<string, (payload: Record<string, unknown>) => void> | undefined;
+    if (!reducerMap) {
+      throw new Error('Reducers are unavailable on the current connection');
+    }
+
+    const call = reducerMap[camelName] ?? reducerMap[snakeName];
+    if (!call) {
+      throw new Error(`Reducer not found: ${camelName}`);
+    }
+
+    call(args);
+  }
+
+  async function callProcedure<Result>(camelName: string, snakeName: string, args: Record<string, unknown>): Promise<Result> {
+    const liveConnection = getConnectionOrThrow();
+    const procedures = liveConnection.procedures as Record<string, (payload: Record<string, unknown>) => Promise<Result>> | undefined;
+    if (!procedures) {
+      throw new Error('Procedures are unavailable on the current connection');
+    }
+
+    const call = procedures[camelName] ?? procedures[snakeName];
+    if (!call) {
+      throw new Error(`Procedure not found: ${camelName}`);
+    }
+
+    return call(args);
+  }
+
+  async function loadSessions(showLoading = true) {
+    if (!conn.isActive) return [];
+    if (showLoading) {
+      setSessionsLoading(true);
+    }
+    try {
+      const rows = await callProcedure<ChatSession[]>(
+        'getAccessibleChatSessions',
+        'get_accessible_chat_sessions',
+        {}
+      );
+      setChatSessions(rows);
+      return rows;
+    } finally {
+      if (showLoading) {
+        setSessionsLoading(false);
+      }
+    }
+  }
+
+  async function loadMessages(sessionId: bigint, showLoading = true) {
+    if (!conn.isActive) return [];
+    if (showLoading) {
+      setMessagesLoading(true);
+    }
+    try {
+      const rows = await callProcedure<ChatMessage[]>(
+        'getAccessibleChatMessages',
+        'get_accessible_chat_messages',
+        { sessionId }
+      );
+      setChatMessages(rows);
+      return rows;
+    } finally {
+      if (showLoading) {
+        setMessagesLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!conn.isActive) return;
+    loadSessions().catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to load chat sessions');
+    });
+  }, [conn.isActive]);
+
+  useEffect(() => {
+    if (!selectedSessionId && mySessions.length > 0) {
+      setSelectedSessionId(mySessions[0].id.toString());
+    }
+  }, [mySessions, selectedSessionId]);
+
+  useEffect(() => {
+    if (!selectedSessionId || !conn.isActive) {
+      setChatMessages([]);
+      return;
+    }
+
+    loadMessages(BigInt(selectedSessionId)).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to load chat messages');
+    });
+  }, [selectedSessionId, conn.isActive]);
+
+  useEffect(() => {
+    if (!selectedSessionId || !conn.isActive) return;
+
+    const sessionId = BigInt(selectedSessionId);
+    const refreshInterval = window.setInterval(() => {
+      loadMessages(sessionId, false).catch(() => {
+        // keep refresh loop resilient
+      });
+      loadSessions(false).catch(() => {
+        // keep refresh loop resilient
+      });
+    }, 1500);
+
+    return () => window.clearInterval(refreshInterval);
+  }, [selectedSessionId, conn.isActive]);
+
+  async function createSessionAndWait(firstTitle?: string): Promise<bigint> {
+    const clientRequestId = crypto.randomUUID();
+    callReducer('createChatSession', 'create_chat_session', {
+      title: firstTitle,
+      clientRequestId,
+    });
+
+    const timeoutMs = 5000;
+    const pollMs = 125;
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < timeoutMs) {
+      const currentSessions = await loadSessions();
+      sessionsRef.current = currentSessions;
+
+      const found = currentSessions.find((s) => s.clientRequestId === clientRequestId);
+      if (found) {
+        setSelectedSessionId(found.id.toString());
+        return found.id;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollMs));
+    }
+
+    throw new Error('Timed out while creating chat session');
+  }
+
+  async function handleSend(e: FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || !conn.isActive || pending) return;
+
+    setPending(true);
+    setStreamingAssistantText('');
+    setError(null);
+
+    try {
+      const currentSessionId = selectedSessionId
+        ? BigInt(selectedSessionId)
+        : await createSessionAndWait(text.slice(0, 72));
+
+      callReducer('saveChatMessage', 'save_chat_message', {
+        sessionId: currentSessionId,
+        role: 'user',
+        content: text,
+        inputTokens: undefined,
+        outputTokens: undefined,
+      });
+
+      const historyForRequest: ChatMessageInput[] = [
+        ...myMessages.map((m) => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content })),
+        { role: 'user', content: text },
+      ];
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: historyForRequest, stream: true }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Chat request failed';
+        try {
+          const errData = (await response.json()) as { error?: string };
+          errorMessage = errData.error ?? errorMessage;
+        } catch {
+          // Ignore response parsing failures.
+        }
+        throw new Error(errorMessage);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Streaming body is missing');
+      }
+
+      const decoder = new TextDecoder();
+      let assistantMessage = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk.length > 0) {
+          assistantMessage += chunk;
+          setStreamingAssistantText(assistantMessage);
+        }
+      }
+
+      const finalAssistant = assistantMessage.trim();
+      if (!finalAssistant) {
+        throw new Error('OpenRouter returned an empty response');
+      }
+
+      callReducer('saveChatMessage', 'save_chat_message', {
+        sessionId: currentSessionId,
+        role: 'assistant',
+        content: finalAssistant,
+        inputTokens: undefined,
+        outputTokens: undefined,
+      });
+
+      setInput('');
+      setStreamingAssistantText('');
+      setLastDroppedCount(0);
+      await loadSessions();
+      await loadMessages(currentSessionId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error while sending message');
+      setStreamingAssistantText('');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleCreateInviteCode() {
+    if (!selectedSessionId || pending) return;
+    setPending(true);
+    setError(null);
+
+    try {
+      const generatedCode = crypto.randomUUID().replace(/-/g, '');
+      callReducer('createChatInvite', 'create_chat_invite', {
+        sessionId: BigInt(selectedSessionId),
+        code: generatedCode,
+      });
+      setLatestInviteCode(generatedCode);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create invite code');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleJoinWithCode() {
+    if (!inviteCodeInput.trim() || pending) return;
+    setPending(true);
+    setError(null);
+
+    try {
+      callReducer('joinChatWithInviteCode', 'join_chat_with_invite_code', {
+        code: inviteCodeInput.trim(),
+      });
+      setInviteCodeInput('');
+      await loadSessions();
+      if (!selectedSessionId && sessionsRef.current.length > 0) {
+        setSelectedSessionId(sessionsRef.current[0].id.toString());
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to join chat with code');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function handleNewChat() {
+    if (pending) return;
+    createSessionAndWait('New chat').catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to create chat');
+    });
+  }
+
+  return (
+    <div className="w-full max-w-7xl mx-auto px-6 py-8 h-[calc(100vh-8rem)]">
+      <SignedOut>
+        <div className="glass rounded-2xl p-8 text-center max-w-xl mx-auto mt-12">
+          <h1 className="text-apple-md mb-4">AI Chat</h1>
+          <p className="text-gray-600 mb-6">Sign in to start a persistent chat and continue where you left off.</p>
+          <SignInButton>
+            <button className="px-5 py-2 rounded-full bg-gray-950 text-white font-semibold cursor-pointer">Sign in</button>
+          </SignInButton>
+        </div>
+      </SignedOut>
+
+      <SignedIn>
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 h-full">
+          <aside className="glass rounded-2xl p-4 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-gray-900">Chats</h2>
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="px-3 py-1.5 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+              >
+                New
+              </button>
+            </div>
+            <div className="overflow-auto space-y-2">
+              {(sessionsLoading || messagesLoading) && mySessions.length === 0 ? (
+                <p className="text-sm text-gray-500">Loading...</p>
+              ) : mySessions.length === 0 ? (
+                <p className="text-sm text-gray-500">No chats yet.</p>
+              ) : (
+                mySessions.map((session) => {
+                  const selected = selectedSessionId === session.id.toString();
+                  return (
+                    <button
+                      key={session.id.toString()}
+                      type="button"
+                      onClick={() => setSelectedSessionId(session.id.toString())}
+                      className={`w-full text-left p-3 rounded-xl border transition-colors cursor-pointer ${
+                        selected
+                          ? 'border-blue-300 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="text-sm font-medium text-gray-900 truncate">{session.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatTimestampMicros(session.updatedAt.microsSinceUnixEpoch)}
+                      </p>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+
+          <section className="glass rounded-2xl p-4 flex flex-col min-h-0">
+            <div className="mb-3 flex flex-col gap-2 md:flex-row">
+              <input
+                value={inviteCodeInput}
+                onChange={(e) => setInviteCodeInput(e.target.value)}
+                placeholder="Paste invite code to join"
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                disabled={pending}
+              />
+              <button
+                type="button"
+                onClick={handleJoinWithCode}
+                disabled={!inviteCodeInput.trim() || pending}
+                className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Join
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateInviteCode}
+                disabled={!selectedSessionId || pending}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Create Invite Code
+              </button>
+            </div>
+
+            {latestInviteCode && (
+              <p className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 break-all">
+                Invite code: {latestInviteCode}
+              </p>
+            )}
+
+            <div className="flex-1 overflow-auto space-y-3 pr-1">
+              {myMessages.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-center text-gray-500 px-8">
+                  Start a new conversation. Messages are saved in SpacetimeDB and available next time you log in.
+                </div>
+              ) : (
+                myMessages.map((message) => {
+                  const fromUser = message.role === 'user';
+                  return (
+                    <div
+                      key={message.id.toString()}
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                        fromUser
+                          ? 'ml-auto bg-blue-600 text-white'
+                          : 'bg-white border border-gray-200 text-gray-900'
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                      <p className={`text-[11px] mt-2 ${fromUser ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {formatTimestampMicros(message.createdAt.microsSinceUnixEpoch)}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
+
+              {streamingAssistantText.length > 0 && (
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white border border-gray-200 text-gray-900">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{streamingAssistantText}</p>
+                  <p className="text-[11px] mt-2 text-gray-500">Streaming...</p>
+                </div>
+              )}
+            </div>
+
+            {lastDroppedCount > 0 && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
+                Context window reached: {lastDroppedCount} older message(s) were omitted for this response.
+              </p>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">{error}</p>
+            )}
+
+            <form onSubmit={handleSend} className="mt-3 flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={conn.isActive ? 'Ask anything...' : 'Connecting...'}
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-3 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                disabled={!conn.isActive || pending}
+              />
+              <button
+                type="submit"
+                disabled={!conn.isActive || pending || input.trim().length === 0}
+                className="px-5 py-3 rounded-xl bg-gray-950 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {pending ? 'Sending...' : 'Send'}
+              </button>
+            </form>
+          </section>
+        </div>
+      </SignedIn>
+    </div>
+  );
+}
