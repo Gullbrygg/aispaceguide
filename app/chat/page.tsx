@@ -17,6 +17,7 @@ function formatTimestampMicros(micros: bigint): string {
 
 export default function ChatPage() {
   const conn = useSpacetimeDB();
+  const myIdentityHex = conn.identity?.toHexString() ?? null;
 
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -27,6 +28,7 @@ export default function ChatPage() {
   const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [latestInviteCode, setLatestInviteCode] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [streamingAssistantText, setStreamingAssistantText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [lastDroppedCount, setLastDroppedCount] = useState<number>(0);
@@ -42,6 +44,11 @@ export default function ChatPage() {
   const myMessages = useMemo(() => {
     return [...chatMessages].sort((a, b) => Number(a.createdAt.microsSinceUnixEpoch - b.createdAt.microsSinceUnixEpoch));
   }, [chatMessages]);
+
+  const selectedSession = useMemo(() => {
+    if (!selectedSessionId) return null;
+    return mySessions.find((session) => session.id.toString() === selectedSessionId) ?? null;
+  }, [mySessions, selectedSessionId]);
 
   function getConnectionOrThrow() {
     const liveConnection = conn.getConnection() as any;
@@ -162,6 +169,23 @@ export default function ChatPage() {
   }, [selectedSessionId, conn.isActive]);
 
   async function createSessionAndWait(firstTitle?: string): Promise<bigint> {
+    const ownedSessionIds = mySessions
+      .filter((session) => myIdentityHex != null && session.ownerId.toHexString() === myIdentityHex)
+      .map((session) => session.id);
+
+    for (const ownedSessionId of ownedSessionIds) {
+      const existingMessages = await callProcedure<ChatMessage[]>(
+        'getAccessibleChatMessages',
+        'get_accessible_chat_messages',
+        { sessionId: ownedSessionId }
+      );
+
+      if (existingMessages.length === 0) {
+        setSelectedSessionId(ownedSessionId.toString());
+        throw new Error('You already have an empty chat. Use it or remove it before creating a new one.');
+      }
+    }
+
     const clientRequestId = crypto.randomUUID();
     callReducer('createChatSession', 'create_chat_session', {
       title: firstTitle,
@@ -316,12 +340,192 @@ export default function ChatPage() {
     }
   }
 
+  async function refreshAfterSessionRemovedOrLeft(previousSessionId: string) {
+    const updatedSessions = await loadSessions();
+
+    if (updatedSessions.some((session) => session.id.toString() === previousSessionId)) {
+      setSelectedSessionId(previousSessionId);
+      await loadMessages(BigInt(previousSessionId));
+      return;
+    }
+
+    if (updatedSessions.length > 0) {
+      const fallback = updatedSessions[0];
+      setSelectedSessionId(fallback.id.toString());
+      await loadMessages(fallback.id);
+      return;
+    }
+
+    setSelectedSessionId(null);
+    setChatMessages([]);
+  }
+
+  async function handleRemoveSession(sessionIdText: string) {
+    if (!sessionIdText || pending) return;
+
+    setPending(true);
+    setError(null);
+
+    try {
+      callReducer('removeChatSession', 'remove_chat_session', {
+        sessionId: BigInt(sessionIdText),
+      });
+      setLatestInviteCode(null);
+      await refreshAfterSessionRemovedOrLeft(sessionIdText);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove chat session');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleLeaveSession(sessionIdText: string) {
+    if (!sessionIdText || pending) return;
+
+    setPending(true);
+    setError(null);
+
+    try {
+      callReducer('leaveChatSession', 'leave_chat_session', {
+        sessionId: BigInt(sessionIdText),
+      });
+      setLatestInviteCode(null);
+      await refreshAfterSessionRemovedOrLeft(sessionIdText);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to leave chat session');
+    } finally {
+      setPending(false);
+    }
+  }
+
   function handleNewChat() {
     if (pending) return;
     createSessionAndWait('New chat').catch((err) => {
       setError(err instanceof Error ? err.message : 'Failed to create chat');
     });
   }
+
+  const sidebarContent = (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold text-gray-900">Chats</h2>
+        <button
+          type="button"
+          onClick={handleNewChat}
+          className="px-3 py-1.5 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+        >
+          New
+        </button>
+      </div>
+
+      <div className="space-y-2 mb-3">
+        <input
+          value={inviteCodeInput}
+          onChange={(e) => setInviteCodeInput(e.target.value)}
+          placeholder="Paste invite code to join"
+          className="w-full rounded-xl border border-gray-200 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+          disabled={pending}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleJoinWithCode}
+            disabled={!inviteCodeInput.trim() || pending}
+            className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Join
+          </button>
+          <button
+            type="button"
+            onClick={handleCreateInviteCode}
+            disabled={!selectedSessionId || pending}
+            className="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Invite
+          </button>
+        </div>
+      </div>
+
+      {latestInviteCode && (
+        <p className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 break-all">
+          Invite code: {latestInviteCode}
+        </p>
+      )}
+
+      <div className="overflow-auto space-y-2 min-h-0 flex-1">
+        {(sessionsLoading || messagesLoading) && mySessions.length === 0 ? (
+          <p className="text-sm text-gray-500">Loading...</p>
+        ) : mySessions.length === 0 ? (
+          <p className="text-sm text-gray-500">No chats yet.</p>
+        ) : (
+          mySessions.map((session) => {
+            const selected = selectedSessionId === session.id.toString();
+            const isOwner = myIdentityHex != null && session.ownerId.toHexString() === myIdentityHex;
+            const sessionIdText = session.id.toString();
+            return (
+              <div
+                key={sessionIdText}
+                className={`group relative w-full p-3 rounded-xl border transition-colors ${
+                  selected
+                    ? 'border-blue-300 bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSessionId(sessionIdText);
+                    setMobileSidebarOpen(false);
+                  }}
+                  className="w-full pr-10 text-left cursor-pointer"
+                >
+                  <p className="text-sm font-medium text-gray-900 truncate">{session.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatTimestampMicros(session.updatedAt.microsSinceUnixEpoch)}
+                  </p>
+                </button>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity group-hover:opacity-50 group-hover:pointer-events-auto hover:opacity-100 focus-within:opacity-100">
+                  {isOwner ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveSession(sessionIdText)}
+                      disabled={pending}
+                      aria-label="Remove chat"
+                      title="Remove chat"
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4h8v2" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleLeaveSession(sessionIdText)}
+                      disabled={pending}
+                      aria-label="Leave chat"
+                      title="Leave chat"
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-gray-200 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <path d="M16 17l5-5-5-5" />
+                        <path d="M21 12H9" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className="w-full max-w-7xl mx-auto px-6 py-8 h-[calc(100vh-8rem)]">
@@ -336,78 +540,60 @@ export default function ChatPage() {
       </SignedOut>
 
       <SignedIn>
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 h-full">
-          <aside className="glass rounded-2xl p-4 flex flex-col min-h-0">
+        <div className="relative grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 h-full">
+          <aside className="hidden md:flex glass rounded-2xl p-4 flex-col min-h-0">
+            {sidebarContent}
+          </aside>
+
+          <div
+            className={`md:hidden fixed inset-0 z-40 bg-black/40 transition-opacity ${
+              mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+
+          <aside
+            className={`md:hidden fixed left-0 top-0 z-50 h-full w-[85vw] max-w-[320px] glass rounded-r-2xl p-4 flex flex-col min-h-0 transition-transform ${
+              mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            aria-hidden={!mobileSidebarOpen}
+          >
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-gray-900">Chats</h2>
+              <h2 className="font-semibold text-gray-900">Chats & Invites</h2>
               <button
                 type="button"
-                onClick={handleNewChat}
-                className="px-3 py-1.5 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700"
+                aria-label="Close sidebar"
               >
-                New
+                ✕
               </button>
             </div>
-            <div className="overflow-auto space-y-2">
-              {(sessionsLoading || messagesLoading) && mySessions.length === 0 ? (
-                <p className="text-sm text-gray-500">Loading...</p>
-              ) : mySessions.length === 0 ? (
-                <p className="text-sm text-gray-500">No chats yet.</p>
-              ) : (
-                mySessions.map((session) => {
-                  const selected = selectedSessionId === session.id.toString();
-                  return (
-                    <button
-                      key={session.id.toString()}
-                      type="button"
-                      onClick={() => setSelectedSessionId(session.id.toString())}
-                      className={`w-full text-left p-3 rounded-xl border transition-colors cursor-pointer ${
-                        selected
-                          ? 'border-blue-300 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="text-sm font-medium text-gray-900 truncate">{session.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatTimestampMicros(session.updatedAt.microsSinceUnixEpoch)}
-                      </p>
-                    </button>
-                  );
-                })
-              )}
-            </div>
+            {sidebarContent}
           </aside>
 
           <section className="glass rounded-2xl p-4 flex flex-col min-h-0">
-            <div className="mb-3 flex flex-col gap-2 md:flex-row">
-              <input
-                value={inviteCodeInput}
-                onChange={(e) => setInviteCodeInput(e.target.value)}
-                placeholder="Paste invite code to join"
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                disabled={pending}
-              />
+            <div className="mb-3 flex items-center justify-between md:hidden">
               <button
                 type="button"
-                onClick={handleJoinWithCode}
-                disabled={!inviteCodeInput.trim() || pending}
-                className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium cursor-pointer"
               >
-                Join
+                Chats & Invites
               </button>
               <button
                 type="button"
-                onClick={handleCreateInviteCode}
-                disabled={!selectedSessionId || pending}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                onClick={handleNewChat}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium cursor-pointer"
               >
-                Create Invite Code
+                New Chat
               </button>
             </div>
 
-            {latestInviteCode && (
-              <p className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 break-all">
-                Invite code: {latestInviteCode}
+            {selectedSession && (
+              <p className="text-xs text-gray-500 mb-3 truncate">
+                Session owner: {selectedSession.ownerId.toHexString()}
               </p>
             )}
 

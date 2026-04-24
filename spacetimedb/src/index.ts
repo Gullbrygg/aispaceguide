@@ -78,6 +78,18 @@ export const sayHello = spacetimedb.reducer((ctx) => {
 export const create_chat_session = spacetimedb.reducer(
   { title: t.string().optional(), clientRequestId: t.string().optional() },
   (ctx, { title, clientRequestId }) => {
+    for (const existingSession of ctx.db.chat_session.chat_session_owner_id.filter(ctx.sender)) {
+      let hasMessages = false;
+      for (const _message of ctx.db.chat_message.chat_message_session_id.filter(existingSession.id)) {
+        hasMessages = true;
+        break;
+      }
+
+      if (!hasMessages) {
+        throw new SenderError('You already have an empty chat. Use it or remove it before creating a new one.');
+      }
+    }
+
     const now = ctx.timestamp;
     const trimmedTitle = title?.trim();
 
@@ -242,6 +254,62 @@ export const save_chat_message = spacetimedb.reducer(
           ? trimmedContent.slice(0, 72)
           : session.title,
     });
+  }
+);
+
+export const remove_chat_session = spacetimedb.reducer(
+  { sessionId: t.u64() },
+  (ctx, { sessionId }) => {
+    const session = ctx.db.chat_session.id.find(sessionId);
+    if (!session) {
+      throw new SenderError('Chat session not found');
+    }
+
+    if (session.ownerId.toHexString() !== ctx.sender.toHexString()) {
+      throw new SenderError('Only the session owner can remove this chat');
+    }
+
+    for (const message of ctx.db.chat_message.chat_message_session_id.filter(sessionId)) {
+      ctx.db.chat_message.id.delete(message.id);
+    }
+
+    for (const member of ctx.db.chat_session_member.chat_session_member_session_id.filter(sessionId)) {
+      ctx.db.chat_session_member.id.delete(member.id);
+    }
+
+    for (const invite of ctx.db.chat_session_invite.chat_session_invite_session_id.filter(sessionId)) {
+      ctx.db.chat_session_invite.id.delete(invite.id);
+    }
+
+    ctx.db.chat_session.id.delete(sessionId);
+  }
+);
+
+export const leave_chat_session = spacetimedb.reducer(
+  { sessionId: t.u64() },
+  (ctx, { sessionId }) => {
+    const session = ctx.db.chat_session.id.find(sessionId);
+    if (!session) {
+      throw new SenderError('Chat session not found');
+    }
+
+    if (session.ownerId.toHexString() === ctx.sender.toHexString()) {
+      throw new SenderError('Session owner cannot leave. Remove the chat instead.');
+    }
+
+    let membership = undefined;
+    for (const member of ctx.db.chat_session_member.chat_session_member_user_id.filter(ctx.sender)) {
+      if (member.sessionId === sessionId) {
+        membership = member;
+        break;
+      }
+    }
+
+    if (!membership) {
+      throw new SenderError('You are not a member of this chat session');
+    }
+
+    ctx.db.chat_session_member.id.delete(membership.id);
   }
 );
 

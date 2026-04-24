@@ -39,6 +39,8 @@ import CreateChatInviteReducer from "./create_chat_invite_reducer";
 import CreateChatSessionReducer from "./create_chat_session_reducer";
 import InviteUserToChatReducer from "./invite_user_to_chat_reducer";
 import JoinChatWithInviteCodeReducer from "./join_chat_with_invite_code_reducer";
+import LeaveChatSessionReducer from "./leave_chat_session_reducer";
+import RemoveChatSessionReducer from "./remove_chat_session_reducer";
 import SaveChatMessageReducer from "./save_chat_message_reducer";
 import SayHelloReducer from "./say_hello_reducer";
 import SetUserProfileReducer from "./set_user_profile_reducer";
@@ -100,6 +102,8 @@ const reducersSchema = __reducers(
   __reducerSchema("create_chat_session", CreateChatSessionReducer),
   __reducerSchema("invite_user_to_chat", InviteUserToChatReducer),
   __reducerSchema("join_chat_with_invite_code", JoinChatWithInviteCodeReducer),
+  __reducerSchema("leave_chat_session", LeaveChatSessionReducer),
+  __reducerSchema("remove_chat_session", RemoveChatSessionReducer),
   __reducerSchema("save_chat_message", SaveChatMessageReducer),
   __reducerSchema("say_hello", SayHelloReducer),
   __reducerSchema("set_user_profile", SetUserProfileReducer),
