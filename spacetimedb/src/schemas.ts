@@ -72,6 +72,146 @@ export const ChatSessionInvite = table(
   }
 );
 
+export const User = table(
+  {
+    public: true,
+    indexes: [{ accessor: 'user_clerk_id', algorithm: 'btree', columns: ['clerkId'] }]
+  },
+  {
+    id: t.identity().primaryKey(),
+    clerkId: t.string(),
+    name: t.string().optional(),
+    email: t.string().optional(),
+    role: t.string().optional(),
+    createdAt: t.timestamp(),
+  }
+);
+
+export const Course = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'course_teacher_id', algorithm: 'btree', columns: ['teacherId'] },
+      { accessor: 'course_created_at', algorithm: 'btree', columns: ['createdAt'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    teacherId: t.identity(),
+    title: t.string(),
+    description: t.string().optional(),
+    createdAt: t.timestamp(),
+  }
+);
+
+export const CourseTask = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'course_task_course_id', algorithm: 'btree', columns: ['courseId'] },
+      { accessor: 'course_task_created_by', algorithm: 'btree', columns: ['createdBy'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    courseId: t.u64(),
+    title: t.string(),
+    description: t.string().optional(),
+    points: t.u64(),
+    dueAtMicros: t.u64().optional(),
+    createdBy: t.identity(),
+    createdAt: t.timestamp(),
+  }
+);
+
+export const CourseEnrollment = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'course_enrollment_course_id', algorithm: 'btree', columns: ['courseId'] },
+      { accessor: 'course_enrollment_student_id', algorithm: 'btree', columns: ['studentId'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    courseId: t.u64(),
+    studentId: t.identity(),
+    joinedAt: t.timestamp(),
+  }
+);
+
+export const TaskGroup = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'task_group_course_id', algorithm: 'btree', columns: ['courseId'] },
+      { accessor: 'task_group_task_id', algorithm: 'btree', columns: ['taskId'] },
+      { accessor: 'task_group_created_by', algorithm: 'btree', columns: ['createdBy'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    courseId: t.u64(),
+    taskId: t.u64(),
+    name: t.string(),
+    createdBy: t.identity(),
+    createdAt: t.timestamp(),
+  }
+);
+
+export const TaskGroupMember = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'task_group_member_group_id', algorithm: 'btree', columns: ['groupId'] },
+      { accessor: 'task_group_member_student_id', algorithm: 'btree', columns: ['studentId'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    groupId: t.u64(),
+    studentId: t.identity(),
+    joinedAt: t.timestamp(),
+  }
+);
+
+export const TaskSubmission = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'task_submission_task_id', algorithm: 'btree', columns: ['taskId'] },
+      { accessor: 'task_submission_group_id', algorithm: 'btree', columns: ['groupId'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    taskId: t.u64(),
+    groupId: t.u64(),
+    submittedBy: t.identity(),
+    content: t.string(),
+    submittedAt: t.timestamp(),
+    status: t.string(),
+  }
+);
+
+export const TaskGrade = table(
+  {
+    public: true,
+    indexes: [
+      { accessor: 'task_grade_submission_id', algorithm: 'btree', columns: ['submissionId'] },
+      { accessor: 'task_grade_graded_by', algorithm: 'btree', columns: ['gradedBy'] }
+    ]
+  },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    submissionId: t.u64(),
+    gradedBy: t.identity(),
+    score: t.u64(),
+    feedback: t.string(),
+    gradedAt: t.timestamp(),
+  }
+);
+
 const spacetimedb = schema({
   person: table(
     { public: true },
@@ -80,19 +220,7 @@ const spacetimedb = schema({
     }
   ),
   // User ===
-  user: table(
-    {
-      indexes: [{ accessor: 'user_clerk_id', algorithm: 'btree', columns: ['clerkId'] }]
-    },
-    {
-      id: t.identity().primaryKey(),
-      clerkId: t.string(),
-      name: t.string().optional(),
-      email: t.string().optional(),
-      role: t.string().optional(),
-      createdAt: t.timestamp(),
-    }
-  ),
+  user: User,
   // Groups
   study_group: table(
     { public: true },
@@ -115,6 +243,13 @@ const spacetimedb = schema({
       groupId: t.u64()
     }
   ),
+  course: Course,
+  course_task: CourseTask,
+  course_enrollment: CourseEnrollment,
+  task_group: TaskGroup,
+  task_group_member: TaskGroupMember,
+  task_submission: TaskSubmission,
+  task_grade: TaskGrade,
   // Chat sessions (one row per conversation)
   chat_session: ChatSession,
   // Chat messages persisted for replay/resume.
@@ -141,6 +276,15 @@ spacetimedb.view(
     }
 
     return sessions;
+  }
+);
+
+spacetimedb.view(
+  { name: 'my_user', public: true },
+  t.array(User.rowType),
+  (ctx) => {
+    const me = ctx.db.user.id.find(ctx.sender);
+    return me ? [me] : [];
   }
 );
 

@@ -52,6 +52,35 @@ export const ChatSessionMember = __t.object("ChatSessionMember", {
 });
 export type ChatSessionMember = __Infer<typeof ChatSessionMember>;
 
+export const Course = __t.object("Course", {
+  id: __t.u64(),
+  teacherId: __t.identity(),
+  title: __t.string(),
+  description: __t.option(__t.string()),
+  createdAt: __t.timestamp(),
+});
+export type Course = __Infer<typeof Course>;
+
+export const CourseEnrollment = __t.object("CourseEnrollment", {
+  id: __t.u64(),
+  courseId: __t.u64(),
+  studentId: __t.identity(),
+  joinedAt: __t.timestamp(),
+});
+export type CourseEnrollment = __Infer<typeof CourseEnrollment>;
+
+export const CourseTask = __t.object("CourseTask", {
+  id: __t.u64(),
+  courseId: __t.u64(),
+  title: __t.string(),
+  description: __t.option(__t.string()),
+  points: __t.u64(),
+  dueAtMicros: __t.option(__t.u64()),
+  createdBy: __t.identity(),
+  createdAt: __t.timestamp(),
+});
+export type CourseTask = __Infer<typeof CourseTask>;
+
 export const Person = __t.object("Person", {
   name: __t.string(),
 });
@@ -62,6 +91,45 @@ export const StudyGroup = __t.object("StudyGroup", {
   name: __t.string(),
 });
 export type StudyGroup = __Infer<typeof StudyGroup>;
+
+export const TaskGrade = __t.object("TaskGrade", {
+  id: __t.u64(),
+  submissionId: __t.u64(),
+  gradedBy: __t.identity(),
+  score: __t.u64(),
+  feedback: __t.string(),
+  gradedAt: __t.timestamp(),
+});
+export type TaskGrade = __Infer<typeof TaskGrade>;
+
+export const TaskGroup = __t.object("TaskGroup", {
+  id: __t.u64(),
+  courseId: __t.u64(),
+  taskId: __t.u64(),
+  name: __t.string(),
+  createdBy: __t.identity(),
+  createdAt: __t.timestamp(),
+});
+export type TaskGroup = __Infer<typeof TaskGroup>;
+
+export const TaskGroupMember = __t.object("TaskGroupMember", {
+  id: __t.u64(),
+  groupId: __t.u64(),
+  studentId: __t.identity(),
+  joinedAt: __t.timestamp(),
+});
+export type TaskGroupMember = __Infer<typeof TaskGroupMember>;
+
+export const TaskSubmission = __t.object("TaskSubmission", {
+  id: __t.u64(),
+  taskId: __t.u64(),
+  groupId: __t.u64(),
+  submittedBy: __t.identity(),
+  content: __t.string(),
+  submittedAt: __t.timestamp(),
+  status: __t.string(),
+});
+export type TaskSubmission = __Infer<typeof TaskSubmission>;
 
 export const User = __t.object("User", {
   id: __t.identity(),

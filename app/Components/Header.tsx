@@ -14,6 +14,7 @@ const NAV_LINKS = [
 
 const AUTH_NAV_LINKS = [
   { href: "/chat", label: "Chat" },
+  { href: "/tasks", label: "Tasks" },
 ];
 
 function Header() {

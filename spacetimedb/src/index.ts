@@ -58,6 +58,45 @@ export const onDisconnect = spacetimedb.clientDisconnected((_ctx) => {
   // Called every time a client disconnects
 });
 
+function getCurrentUser(ctx: any) {
+  const user = ctx.db.user.id.find(ctx.sender);
+  if (!user) {
+    throw new SenderError('User not found. Reconnect and try again.');
+  }
+  return user;
+}
+
+function requireRole(ctx: any, role: 'teacher' | 'student') {
+  const user = getCurrentUser(ctx);
+  if (user.role !== role) {
+    throw new SenderError(`Only ${role}s can perform this action`);
+  }
+  return user;
+}
+
+function ensureStudentEnrolled(ctx: any, courseId: bigint, studentId: any) {
+  for (const enrollment of ctx.db.course_enrollment.course_enrollment_student_id.filter(studentId)) {
+    if (enrollment.courseId === courseId) {
+      return enrollment;
+    }
+  }
+
+  throw new SenderError('You are not enrolled in this course');
+}
+
+function getCourseAndRequireTeacher(ctx: any, courseId: bigint) {
+  const course = ctx.db.course.id.find(courseId);
+  if (!course) {
+    throw new SenderError('Course not found');
+  }
+
+  if (course.teacherId.toHexString() !== ctx.sender.toHexString()) {
+    throw new SenderError('Only the course teacher can perform this action');
+  }
+
+  return course;
+}
+
 export const add = spacetimedb.reducer({ name: t.string() }, (ctx, { name }) => {
   ctx.db.person.insert({ name });
 });
@@ -67,6 +106,354 @@ export const set_user_profile = spacetimedb.reducer({ name: t.string() }, (ctx, 
   if (!existing) throw new SenderError("User not found");
   ctx.db.user.id.update({ ...existing, name });
 });
+
+export const set_user_role = spacetimedb.reducer({ role: t.string() }, (ctx, { role }) => {
+  const existing = getCurrentUser(ctx);
+  const normalizedRole = role.trim().toLowerCase();
+
+  if (normalizedRole !== 'teacher' && normalizedRole !== 'student') {
+    throw new SenderError('Role must be teacher or student');
+  }
+
+  ctx.db.user.id.update({ ...existing, role: normalizedRole });
+});
+
+export const create_course = spacetimedb.reducer(
+  { title: t.string(), description: t.string().optional() },
+  (ctx, { title, description }) => {
+    requireRole(ctx, 'teacher');
+    const trimmedTitle = title.trim();
+
+    if (!trimmedTitle) {
+      throw new SenderError('Course title is required');
+    }
+
+    ctx.db.course.insert({
+      id: 0n,
+      teacherId: ctx.sender,
+      title: trimmedTitle.slice(0, 160),
+      description: description?.trim() || undefined,
+      createdAt: ctx.timestamp,
+    });
+  }
+);
+
+export const create_course_task = spacetimedb.reducer(
+  {
+    courseId: t.u64(),
+    title: t.string(),
+    description: t.string().optional(),
+    points: t.u64().optional(),
+    dueAtMicros: t.u64().optional(),
+  },
+  (ctx, { courseId, title, description, points, dueAtMicros }) => {
+    requireRole(ctx, 'teacher');
+    getCourseAndRequireTeacher(ctx, courseId);
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      throw new SenderError('Task title is required');
+    }
+
+    ctx.db.course_task.insert({
+      id: 0n,
+      courseId,
+      title: trimmedTitle.slice(0, 200),
+      description: description?.trim() || undefined,
+      points: points && points > 0n ? points : 100n,
+      dueAtMicros,
+      createdBy: ctx.sender,
+      createdAt: ctx.timestamp,
+    });
+  }
+);
+
+export const join_course = spacetimedb.reducer({ courseId: t.u64() }, (ctx, { courseId }) => {
+  requireRole(ctx, 'student');
+
+  const course = ctx.db.course.id.find(courseId);
+  if (!course) {
+    throw new SenderError('Course not found');
+  }
+
+  for (const enrollment of ctx.db.course_enrollment.course_enrollment_student_id.filter(ctx.sender)) {
+    if (enrollment.courseId === courseId) {
+      return;
+    }
+  }
+
+  ctx.db.course_enrollment.insert({
+    id: 0n,
+    courseId,
+    studentId: ctx.sender,
+    joinedAt: ctx.timestamp,
+  });
+});
+
+function getTaskAndRequireCourseMatch(ctx: any, taskId: bigint, courseId: bigint) {
+  const task = ctx.db.course_task.id.find(taskId);
+  if (!task) {
+    throw new SenderError('Task not found');
+  }
+
+  if (task.courseId !== courseId) {
+    throw new SenderError('Task does not belong to this course');
+  }
+
+  return task;
+}
+
+function ensureStudentNotAlreadyInTaskGroup(ctx: any, taskId: bigint, studentId: any) {
+  for (const membership of ctx.db.task_group_member.task_group_member_student_id.filter(studentId)) {
+    const group = ctx.db.task_group.id.find(membership.groupId);
+    if (group && group.taskId === taskId) {
+      throw new SenderError('You are already in a group for this task');
+    }
+  }
+}
+
+function cleanupTaskGroupIfEmpty(ctx: any, groupId: bigint) {
+  for (const _member of ctx.db.task_group_member.task_group_member_group_id.filter(groupId)) {
+    return;
+  }
+
+  for (const submission of ctx.db.task_submission.task_submission_group_id.filter(groupId)) {
+    for (const grade of ctx.db.task_grade.task_grade_submission_id.filter(submission.id)) {
+      ctx.db.task_grade.id.delete(grade.id);
+    }
+    ctx.db.task_submission.id.delete(submission.id);
+  }
+
+  ctx.db.task_group.id.delete(groupId);
+}
+
+export const create_task_group = spacetimedb.reducer(
+  { courseId: t.u64(), taskId: t.u64(), name: t.string() },
+  (ctx, { courseId, taskId, name }) => {
+    requireRole(ctx, 'student');
+    ensureStudentEnrolled(ctx, courseId, ctx.sender);
+    getTaskAndRequireCourseMatch(ctx, taskId, courseId);
+    ensureStudentNotAlreadyInTaskGroup(ctx, taskId, ctx.sender);
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      throw new SenderError('Group name is required');
+    }
+
+    const group = ctx.db.task_group.insert({
+      id: 0n,
+      courseId,
+      taskId,
+      name: trimmedName.slice(0, 160),
+      createdBy: ctx.sender,
+      createdAt: ctx.timestamp,
+    });
+
+    ctx.db.task_group_member.insert({
+      id: 0n,
+      groupId: group.id,
+      studentId: ctx.sender,
+      joinedAt: ctx.timestamp,
+    });
+  }
+);
+
+export const join_task_group = spacetimedb.reducer({ groupId: t.u64() }, (ctx, { groupId }) => {
+  requireRole(ctx, 'student');
+
+  const group = ctx.db.task_group.id.find(groupId);
+  if (!group) {
+    throw new SenderError('Group not found');
+  }
+
+  ensureStudentEnrolled(ctx, group.courseId, ctx.sender);
+  ensureStudentNotAlreadyInTaskGroup(ctx, group.taskId, ctx.sender);
+
+  for (const membership of ctx.db.task_group_member.task_group_member_group_id.filter(groupId)) {
+    if (membership.studentId.toHexString() === ctx.sender.toHexString()) {
+      return;
+    }
+  }
+
+  ctx.db.task_group_member.insert({
+    id: 0n,
+    groupId,
+    studentId: ctx.sender,
+    joinedAt: ctx.timestamp,
+  });
+});
+
+export const leave_task_group = spacetimedb.reducer({ groupId: t.u64() }, (ctx, { groupId }) => {
+  requireRole(ctx, 'student');
+
+  const group = ctx.db.task_group.id.find(groupId);
+  if (!group) {
+    throw new SenderError('Group not found');
+  }
+
+  let membership = undefined;
+  for (const row of ctx.db.task_group_member.task_group_member_group_id.filter(groupId)) {
+    if (row.studentId.toHexString() === ctx.sender.toHexString()) {
+      membership = row;
+      break;
+    }
+  }
+
+  if (!membership) {
+    throw new SenderError('You are not a member of this group');
+  }
+
+  ctx.db.task_group_member.id.delete(membership.id);
+  cleanupTaskGroupIfEmpty(ctx, groupId);
+});
+
+export const leave_course = spacetimedb.reducer({ courseId: t.u64() }, (ctx, { courseId }) => {
+  requireRole(ctx, 'student');
+
+  const course = ctx.db.course.id.find(courseId);
+  if (!course) {
+    throw new SenderError('Course not found');
+  }
+
+  let enrollment = undefined;
+  for (const row of ctx.db.course_enrollment.course_enrollment_student_id.filter(ctx.sender)) {
+    if (row.courseId === courseId) {
+      enrollment = row;
+      break;
+    }
+  }
+
+  if (!enrollment) {
+    throw new SenderError('You are not enrolled in this course');
+  }
+
+  const groupsToCleanup: bigint[] = [];
+  for (const membership of ctx.db.task_group_member.task_group_member_student_id.filter(ctx.sender)) {
+    const group = ctx.db.task_group.id.find(membership.groupId);
+    if (group && group.courseId === courseId) {
+      groupsToCleanup.push(group.id);
+      ctx.db.task_group_member.id.delete(membership.id);
+    }
+  }
+
+  for (const groupId of groupsToCleanup) {
+    cleanupTaskGroupIfEmpty(ctx, groupId);
+  }
+
+  ctx.db.course_enrollment.id.delete(enrollment.id);
+});
+
+export const submit_task_group_work = spacetimedb.reducer(
+  { taskId: t.u64(), groupId: t.u64(), content: t.string() },
+  (ctx, { taskId, groupId, content }) => {
+    requireRole(ctx, 'student');
+
+    const task = ctx.db.course_task.id.find(taskId);
+    if (!task) {
+      throw new SenderError('Task not found');
+    }
+
+    const group = ctx.db.task_group.id.find(groupId);
+    if (!group || group.taskId !== taskId) {
+      throw new SenderError('Group does not match this task');
+    }
+
+    let isMember = false;
+    for (const membership of ctx.db.task_group_member.task_group_member_group_id.filter(groupId)) {
+      if (membership.studentId.toHexString() === ctx.sender.toHexString()) {
+        isMember = true;
+        break;
+      }
+    }
+
+    if (!isMember) {
+      throw new SenderError('You are not a member of this group');
+    }
+
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      throw new SenderError('Submission content is required');
+    }
+
+    let existingSubmission = undefined;
+    for (const submission of ctx.db.task_submission.task_submission_group_id.filter(groupId)) {
+      if (submission.taskId === taskId) {
+        existingSubmission = submission;
+        break;
+      }
+    }
+
+    if (existingSubmission) {
+      ctx.db.task_submission.id.update({
+        ...existingSubmission,
+        content: trimmedContent,
+        submittedBy: ctx.sender,
+        submittedAt: ctx.timestamp,
+        status: 'submitted',
+      });
+      return;
+    }
+
+    ctx.db.task_submission.insert({
+      id: 0n,
+      taskId,
+      groupId,
+      submittedBy: ctx.sender,
+      content: trimmedContent,
+      submittedAt: ctx.timestamp,
+      status: 'submitted',
+    });
+  }
+);
+
+export const grade_task_submission = spacetimedb.reducer(
+  { submissionId: t.u64(), score: t.u64(), feedback: t.string() },
+  (ctx, { submissionId, score, feedback }) => {
+    requireRole(ctx, 'teacher');
+
+    const submission = ctx.db.task_submission.id.find(submissionId);
+    if (!submission) {
+      throw new SenderError('Submission not found');
+    }
+
+    const task = ctx.db.course_task.id.find(submission.taskId);
+    if (!task) {
+      throw new SenderError('Task not found');
+    }
+
+    getCourseAndRequireTeacher(ctx, task.courseId);
+
+    const trimmedFeedback = feedback.trim();
+    if (!trimmedFeedback) {
+      throw new SenderError('Feedback is required');
+    }
+
+    let existingGrade = undefined;
+    for (const grade of ctx.db.task_grade.task_grade_submission_id.filter(submissionId)) {
+      existingGrade = grade;
+      break;
+    }
+
+    if (existingGrade) {
+      ctx.db.task_grade.id.update({
+        ...existingGrade,
+        score,
+        feedback: trimmedFeedback,
+        gradedBy: ctx.sender,
+        gradedAt: ctx.timestamp,
+      });
+    } else {
+      ctx.db.task_grade.insert({
+        id: 0n,
+        submissionId,
+        gradedBy: ctx.sender,
+        score,
+        feedback: trimmedFeedback,
+        gradedAt: ctx.timestamp,
+      });
+    }
+  }
+);
 
 export const sayHello = spacetimedb.reducer((ctx) => {
   for (const person of ctx.db.person.iter()) {

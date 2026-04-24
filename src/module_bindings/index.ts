@@ -37,27 +37,96 @@ import {
 import AddReducer from "./add_reducer";
 import CreateChatInviteReducer from "./create_chat_invite_reducer";
 import CreateChatSessionReducer from "./create_chat_session_reducer";
+import CreateCourseReducer from "./create_course_reducer";
+import CreateCourseTaskReducer from "./create_course_task_reducer";
+import CreateTaskGroupReducer from "./create_task_group_reducer";
+import GradeTaskSubmissionReducer from "./grade_task_submission_reducer";
 import InviteUserToChatReducer from "./invite_user_to_chat_reducer";
 import JoinChatWithInviteCodeReducer from "./join_chat_with_invite_code_reducer";
+import JoinCourseReducer from "./join_course_reducer";
+import JoinTaskGroupReducer from "./join_task_group_reducer";
 import LeaveChatSessionReducer from "./leave_chat_session_reducer";
+import LeaveCourseReducer from "./leave_course_reducer";
+import LeaveTaskGroupReducer from "./leave_task_group_reducer";
 import RemoveChatSessionReducer from "./remove_chat_session_reducer";
 import SaveChatMessageReducer from "./save_chat_message_reducer";
 import SayHelloReducer from "./say_hello_reducer";
 import SetUserProfileReducer from "./set_user_profile_reducer";
+import SetUserRoleReducer from "./set_user_role_reducer";
+import SubmitTaskGroupWorkReducer from "./submit_task_group_work_reducer";
 
 // Import all procedure arg schemas
 import * as GetAccessibleChatMessagesProcedure from "./get_accessible_chat_messages_procedure";
 import * as GetAccessibleChatSessionsProcedure from "./get_accessible_chat_sessions_procedure";
 
 // Import all table schema definitions
+import CourseRow from "./course_table";
+import CourseEnrollmentRow from "./course_enrollment_table";
+import CourseTaskRow from "./course_task_table";
 import PersonRow from "./person_table";
 import StudyGroupRow from "./study_group_table";
+import TaskGradeRow from "./task_grade_table";
+import TaskGroupRow from "./task_group_table";
+import TaskGroupMemberRow from "./task_group_member_table";
+import TaskSubmissionRow from "./task_submission_table";
+import UserRow from "./user_table";
 import UserGroupRow from "./user_group_table";
 
 /** Type-only namespace exports for generated type groups. */
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
+  course: __table({
+    name: 'course',
+    indexes: [
+      { accessor: 'course_created_at', algorithm: 'btree', columns: [
+        'createdAt',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'course_teacher_id', algorithm: 'btree', columns: [
+        'teacherId',
+      ] },
+    ],
+    constraints: [
+      { name: 'course_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, CourseRow),
+  course_enrollment: __table({
+    name: 'course_enrollment',
+    indexes: [
+      { accessor: 'course_enrollment_course_id', algorithm: 'btree', columns: [
+        'courseId',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'course_enrollment_student_id', algorithm: 'btree', columns: [
+        'studentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'course_enrollment_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, CourseEnrollmentRow),
+  course_task: __table({
+    name: 'course_task',
+    indexes: [
+      { accessor: 'course_task_course_id', algorithm: 'btree', columns: [
+        'courseId',
+      ] },
+      { accessor: 'course_task_created_by', algorithm: 'btree', columns: [
+        'createdBy',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'course_task_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, CourseTaskRow),
   person: __table({
     name: 'person',
     indexes: [
@@ -76,6 +145,91 @@ const tablesSchema = __schema({
       { name: 'study_group_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, StudyGroupRow),
+  task_grade: __table({
+    name: 'task_grade',
+    indexes: [
+      { accessor: 'task_grade_graded_by', algorithm: 'btree', columns: [
+        'gradedBy',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'task_grade_submission_id', algorithm: 'btree', columns: [
+        'submissionId',
+      ] },
+    ],
+    constraints: [
+      { name: 'task_grade_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TaskGradeRow),
+  task_group: __table({
+    name: 'task_group',
+    indexes: [
+      { accessor: 'task_group_course_id', algorithm: 'btree', columns: [
+        'courseId',
+      ] },
+      { accessor: 'task_group_created_by', algorithm: 'btree', columns: [
+        'createdBy',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'task_group_task_id', algorithm: 'btree', columns: [
+        'taskId',
+      ] },
+    ],
+    constraints: [
+      { name: 'task_group_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TaskGroupRow),
+  task_group_member: __table({
+    name: 'task_group_member',
+    indexes: [
+      { accessor: 'task_group_member_group_id', algorithm: 'btree', columns: [
+        'groupId',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'task_group_member_student_id', algorithm: 'btree', columns: [
+        'studentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'task_group_member_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TaskGroupMemberRow),
+  task_submission: __table({
+    name: 'task_submission',
+    indexes: [
+      { accessor: 'task_submission_group_id', algorithm: 'btree', columns: [
+        'groupId',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'task_submission_task_id', algorithm: 'btree', columns: [
+        'taskId',
+      ] },
+    ],
+    constraints: [
+      { name: 'task_submission_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TaskSubmissionRow),
+  user: __table({
+    name: 'user',
+    indexes: [
+      { accessor: 'user_clerk_id', algorithm: 'btree', columns: [
+        'clerkId',
+      ] },
+      { accessor: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'user_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, UserRow),
   user_group: __table({
     name: 'user_group',
     indexes: [
@@ -100,13 +254,23 @@ const reducersSchema = __reducers(
   __reducerSchema("add", AddReducer),
   __reducerSchema("create_chat_invite", CreateChatInviteReducer),
   __reducerSchema("create_chat_session", CreateChatSessionReducer),
+  __reducerSchema("create_course", CreateCourseReducer),
+  __reducerSchema("create_course_task", CreateCourseTaskReducer),
+  __reducerSchema("create_task_group", CreateTaskGroupReducer),
+  __reducerSchema("grade_task_submission", GradeTaskSubmissionReducer),
   __reducerSchema("invite_user_to_chat", InviteUserToChatReducer),
   __reducerSchema("join_chat_with_invite_code", JoinChatWithInviteCodeReducer),
+  __reducerSchema("join_course", JoinCourseReducer),
+  __reducerSchema("join_task_group", JoinTaskGroupReducer),
   __reducerSchema("leave_chat_session", LeaveChatSessionReducer),
+  __reducerSchema("leave_course", LeaveCourseReducer),
+  __reducerSchema("leave_task_group", LeaveTaskGroupReducer),
   __reducerSchema("remove_chat_session", RemoveChatSessionReducer),
   __reducerSchema("save_chat_message", SaveChatMessageReducer),
   __reducerSchema("say_hello", SayHelloReducer),
   __reducerSchema("set_user_profile", SetUserProfileReducer),
+  __reducerSchema("set_user_role", SetUserRoleReducer),
+  __reducerSchema("submit_task_group_work", SubmitTaskGroupWorkReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

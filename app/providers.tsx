@@ -21,9 +21,18 @@ const onConnect = (conn: DbConnection, identity: Identity) => {
   conn.subscriptionBuilder().subscribe([
     'SELECT * FROM my_chat_session',
     'SELECT * FROM my_chat_message',
+    'SELECT * FROM my_user',
+    'SELECT * FROM user',
     'SELECT * FROM person',
     'SELECT * FROM study_group',
-    'SELECT * FROM user_group'
+    'SELECT * FROM user_group',
+    'SELECT * FROM course',
+    'SELECT * FROM course_task',
+    'SELECT * FROM course_enrollment',
+    'SELECT * FROM task_group',
+    'SELECT * FROM task_group_member',
+    'SELECT * FROM task_submission',
+    'SELECT * FROM task_grade'
   ]);
 };
 

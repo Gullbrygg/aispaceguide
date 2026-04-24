@@ -592,7 +592,7 @@ export default function ChatPage() {
             </div>
 
             {selectedSession && (
-              <p className="text-xs text-gray-500 mb-3 truncate">
+              <p className="text-xs text-gray-500 mb-3 truncate hidden">
                 Session owner: {selectedSession.ownerId.toHexString()}
               </p>
             )}
