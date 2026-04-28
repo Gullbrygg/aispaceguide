@@ -69,6 +69,7 @@ const isPublicRoute = createRouteMatcher([
   '/quiz',
   '/contact',
   '/dashboard',
+  '/faq',
 
 ]);
 
