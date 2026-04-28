@@ -13,7 +13,7 @@ type GradeDraft = {
 };
 
 function formatMicros(micros: bigint): string {
-  return new Date(Number(micros / 1000n)).toLocaleString();
+  return new Date(Number(micros / 1000n)).toLocaleString('nb-NO');
 }
 
 function shortIdentity(hex: string): string {
@@ -90,36 +90,24 @@ export default function TasksPage() {
 
   function callReducer(camelName: string, snakeName: string, args: ReducerPayload) {
     const liveConnection = conn.getConnection() as any;
-    if (!liveConnection) {
-      throw new Error('SpacetimeDB is not connected yet');
-    }
-
+    if (!liveConnection) throw new Error('SpacetimeDB er ikke tilkoblet ennå');
     const reducerMap = liveConnection.reducers as Record<string, (payload: ReducerPayload) => void> | undefined;
-    if (!reducerMap) {
-      throw new Error('Reducers are unavailable on the current connection');
-    }
-
+    if (!reducerMap) throw new Error('Reducers er ikke tilgjengelige');
     const call = reducerMap[camelName] ?? reducerMap[snakeName];
-    if (!call) {
-      throw new Error(`Reducer not found: ${camelName}`);
-    }
-
+    if (!call) throw new Error(`Reducer ikke funnet: ${camelName}`);
     call(args);
   }
 
   const visibleCourses = useMemo(() => {
     if (!myIdentityHex) return [];
-
     if (myRole === 'teacher') {
       return courses.filter((course) => course.teacherId.toHexString() === myIdentityHex);
     }
-
     const myCourseIds = new Set(
       enrollments
         .filter((row) => row.studentId.toHexString() === myIdentityHex)
         .map((row) => row.courseId.toString())
     );
-
     return courses.filter((course) => myCourseIds.has(course.id.toString()));
   }, [courses, enrollments, myIdentityHex, myRole]);
 
@@ -130,7 +118,6 @@ export default function TasksPage() {
         .filter((row) => row.studentId.toHexString() === myIdentityHex)
         .map((row) => row.courseId.toString())
     );
-
     return courses.filter((course) => !joinedIds.has(course.id.toString()));
   }, [courses, enrollments, myIdentityHex, myRole]);
 
@@ -158,7 +145,6 @@ export default function TasksPage() {
 
   const myTaskMembership = useMemo(() => {
     if (!selectedTask || !myIdentityHex) return null;
-
     const myMemberships = memberships.filter((member) => member.studentId.toHexString() === myIdentityHex);
     for (const membership of myMemberships) {
       const group = groups.find((candidate) => candidate.id.toString() === membership.groupId.toString());
@@ -166,7 +152,6 @@ export default function TasksPage() {
         return { membership, group };
       }
     }
-
     return null;
   }, [groups, memberships, myIdentityHex, selectedTask]);
 
@@ -180,7 +165,6 @@ export default function TasksPage() {
       setSelectedCourseId(visibleCourses[0].id.toString());
       return;
     }
-
     if (selectedCourseId && !visibleCourses.some((course) => course.id.toString() === selectedCourseId)) {
       setSelectedCourseId(visibleCourses[0]?.id.toString() ?? null);
       setSelectedTaskId(null);
@@ -192,7 +176,6 @@ export default function TasksPage() {
       setSelectedTaskId(selectedCourseTasks[0].id.toString());
       return;
     }
-
     if (selectedTaskId && !selectedCourseTasks.some((task) => task.id.toString() === selectedTaskId)) {
       setSelectedTaskId(selectedCourseTasks[0]?.id.toString() ?? null);
     }
@@ -201,31 +184,24 @@ export default function TasksPage() {
   async function runAction(action: () => void | Promise<void>) {
     setPending(true);
     setError(null);
-
     try {
       await action();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
+      setError(err instanceof Error ? err.message : 'Handlingen mislyktes');
     } finally {
       setPending(false);
     }
   }
 
   function handleSetRole(role: 'teacher' | 'student') {
-    runAction(() => {
-      callReducer('setUserRole', 'set_user_role', { role });
-    });
+    runAction(() => { callReducer('setUserRole', 'set_user_role', { role }); });
   }
 
   function handleCreateCourse(e: FormEvent) {
     e.preventDefault();
     if (!courseTitle.trim()) return;
-
     runAction(() => {
-      callReducer('createCourse', 'create_course', {
-        title: courseTitle,
-        description: courseDescription || undefined,
-      });
+      callReducer('createCourse', 'create_course', { title: courseTitle, description: courseDescription || undefined });
       setCourseTitle('');
       setCourseDescription('');
     });
@@ -234,7 +210,6 @@ export default function TasksPage() {
   function handleCreateTask(e: FormEvent) {
     e.preventDefault();
     if (!selectedCourse || !taskTitle.trim()) return;
-
     runAction(() => {
       const parsedPoints = BigInt(Math.max(1, Number(taskPoints || '100')));
       callReducer('createCourseTask', 'create_course_task', {
@@ -250,50 +225,36 @@ export default function TasksPage() {
   }
 
   function handleJoinCourse(courseId: bigint) {
-    runAction(() => {
-      callReducer('joinCourse', 'join_course', { courseId });
-    });
+    runAction(() => { callReducer('joinCourse', 'join_course', { courseId }); });
   }
 
   function handleLeaveCourse(courseId: bigint) {
     runAction(() => {
       callReducer('leaveCourse', 'leave_course', { courseId });
-      if (selectedCourseId === courseId.toString()) {
-        setSelectedTaskId(null);
-      }
+      if (selectedCourseId === courseId.toString()) setSelectedTaskId(null);
     });
   }
 
   function handleCreateGroup(e: FormEvent) {
     e.preventDefault();
     if (!selectedCourse || !selectedTask || !groupName.trim()) return;
-
     runAction(() => {
-      callReducer('createTaskGroup', 'create_task_group', {
-        courseId: selectedCourse.id,
-        taskId: selectedTask.id,
-        name: groupName,
-      });
+      callReducer('createTaskGroup', 'create_task_group', { courseId: selectedCourse.id, taskId: selectedTask.id, name: groupName });
       setGroupName('');
     });
   }
 
   function handleJoinGroup(groupId: bigint) {
-    runAction(() => {
-      callReducer('joinTaskGroup', 'join_task_group', { groupId });
-    });
+    runAction(() => { callReducer('joinTaskGroup', 'join_task_group', { groupId }); });
   }
 
   function handleLeaveGroup(groupId: bigint) {
-    runAction(() => {
-      callReducer('leaveTaskGroup', 'leave_task_group', { groupId });
-    });
+    runAction(() => { callReducer('leaveTaskGroup', 'leave_task_group', { groupId }); });
   }
 
   function handleSubmitTask(e: FormEvent) {
     e.preventDefault();
     if (!selectedTask || !myTaskMembership || !submissionText.trim()) return;
-
     runAction(() => {
       callReducer('submitTaskGroupWork', 'submit_task_group_work', {
         taskId: selectedTask.id,
@@ -307,7 +268,6 @@ export default function TasksPage() {
   function handleGrade(submissionId: bigint) {
     const draft = gradeDrafts[submissionId.toString()];
     if (!draft?.feedback?.trim()) return;
-
     runAction(() => {
       callReducer('gradeTaskSubmission', 'grade_task_submission', {
         submissionId,
@@ -321,38 +281,30 @@ export default function TasksPage() {
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
       <SignedOut>
         <div className="rounded-xl border border-gray-200 p-6 bg-white">
-          <h1 className="text-2xl font-semibold text-gray-900">Task workspace</h1>
-          <p className="text-gray-600 mt-2">Sign in to manage courses, tasks, groups, and grading.</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Oppgavearbeidsrom</h1>
+          <p className="text-gray-600 mt-2">Logg inn for å administrere kurs, oppgaver, grupper og vurderinger.</p>
           <SignInButton>
-            <button className="mt-4 px-4 py-2 rounded-lg bg-gray-900 text-white">Sign in</button>
+            <button className="mt-4 px-4 py-2 rounded-lg bg-gray-900 text-white cursor-pointer">Logg inn</button>
           </SignInButton>
         </div>
       </SignedOut>
 
       <SignedIn>
         <section className="rounded-xl border border-gray-200 p-6 bg-white space-y-4">
-          <h1 className="text-2xl font-semibold text-gray-900">Live course tasks</h1>
-          <p className="text-gray-600">Everything below is synced in real time through SpacetimeDB subscriptions.</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Kursoppgaver</h1>
+          <p className="text-gray-600">Alt nedenfor synkroniseres i sanntid via SpacetimeDB.</p>
 
           {!myRole && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm text-amber-900">Choose your role to continue.</p>
+              <p className="text-sm text-amber-900">Velg rollen din for å fortsette.</p>
               <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handleSetRole('teacher')}
-                  className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60"
-                >
-                  I am a teacher
+                <button type="button" disabled={pending} onClick={() => handleSetRole('teacher')}
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                  Jeg er lærer
                 </button>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handleSetRole('student')}
-                  className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 disabled:opacity-60"
-                >
-                  I am a student
+                <button type="button" disabled={pending} onClick={() => handleSetRole('student')}
+                  className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 disabled:opacity-60 cursor-pointer">
+                  Jeg er student
                 </button>
               </div>
             </div>
@@ -360,17 +312,13 @@ export default function TasksPage() {
 
           {myRole && (
             <div className="text-sm text-gray-700">
-              Role: <span className="font-semibold">{myRole}</span>
+              Rolle: <span className="font-semibold">{myRole === 'teacher' ? 'Lærer' : 'Student'}</span>
               <span className="mx-2">|</span>
-              User: {myIdentityHex ? getUserLabel(myIdentityHex) : 'unknown'}
+              Bruker: {myIdentityHex ? getUserLabel(myIdentityHex) : 'ukjent'}
               <span className="mx-2">|</span>
-              <button
-                type="button"
-                className="underline"
-                disabled={pending}
-                onClick={() => handleSetRole(myRole === 'teacher' ? 'student' : 'teacher')}
-              >
-                Switch role
+              <button type="button" className="underline cursor-pointer" disabled={pending}
+                onClick={() => handleSetRole(myRole === 'teacher' ? 'student' : 'teacher')}>
+                Bytt rolle
               </button>
             </div>
           )}
@@ -383,22 +331,13 @@ export default function TasksPage() {
         {myRole === 'teacher' && (
           <section>
             <form onSubmit={handleCreateCourse} className="rounded-xl border border-gray-200 p-6 bg-white space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900">Create course</h2>
-              <input
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                placeholder="Course title"
-                value={courseTitle}
-                onChange={(e) => setCourseTitle(e.target.value)}
-              />
-              <textarea
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                rows={3}
-                placeholder="Description"
-                value={courseDescription}
-                onChange={(e) => setCourseDescription(e.target.value)}
-              />
-              <button type="submit" disabled={pending} className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60">
-                Create course
+              <h2 className="text-lg font-semibold text-gray-900">Opprett kurs</h2>
+              <input className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Kurstittel"
+                value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} />
+              <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2" rows={3} placeholder="Beskrivelse"
+                value={courseDescription} onChange={(e) => setCourseDescription(e.target.value)} />
+              <button type="submit" disabled={pending} className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                Opprett kurs
               </button>
             </form>
           </section>
@@ -406,21 +345,17 @@ export default function TasksPage() {
 
         {myRole === 'student' && (
           <section className="rounded-xl border border-gray-200 p-6 bg-white space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">Join courses</h2>
-            {allTeacherCourses.length === 0 && <p className="text-sm text-gray-600">No available courses to join.</p>}
+            <h2 className="text-lg font-semibold text-gray-900">Meld deg på kurs</h2>
+            {allTeacherCourses.length === 0 && <p className="text-sm text-gray-600">Ingen tilgjengelige kurs å melde seg på.</p>}
             {allTeacherCourses.map((course) => (
               <div key={course.id.toString()} className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
                 <div>
                   <p className="font-medium text-gray-900">{course.title}</p>
-                  <p className="text-xs text-gray-600">Teacher: {getUserLabel(course.teacherId.toHexString())}</p>
+                  <p className="text-xs text-gray-600">Lærer: {getUserLabel(course.teacherId.toHexString())}</p>
                 </div>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handleJoinCourse(course.id)}
-                  className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60"
-                >
-                  Join
+                <button type="button" disabled={pending} onClick={() => handleJoinCourse(course.id)}
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                  Meld på
                 </button>
               </div>
             ))}
@@ -429,31 +364,20 @@ export default function TasksPage() {
 
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-xl border border-gray-200 p-6 bg-white space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900">My course list</h2>
-            {visibleCourses.length === 0 && <p className="text-sm text-gray-600">No courses yet.</p>}
+            <h2 className="text-lg font-semibold text-gray-900">Mine kurs</h2>
+            {visibleCourses.length === 0 && <p className="text-sm text-gray-600">Ingen kurs ennå.</p>}
             {visibleCourses.map((course) => (
-              <div
-                key={course.id.toString()}
-                className={`relative group p-3 rounded-lg border ${selectedCourseId === course.id.toString() ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setSelectedCourseId(course.id.toString())}
-                  className="w-full text-left pr-10"
-                >
+              <div key={course.id.toString()}
+                className={`relative group p-3 rounded-lg border ${selectedCourseId === course.id.toString() ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
+                <button type="button" onClick={() => setSelectedCourseId(course.id.toString())} className="w-full text-left pr-10">
                   <p className="font-medium text-gray-900">{course.title}</p>
-                  <p className="text-xs text-gray-600">Teacher: {getUserLabel(course.teacherId.toHexString())}</p>
-                  <p className="text-xs text-gray-600 mt-1">{course.description ?? 'No description'}</p>
+                  <p className="text-xs text-gray-600">Lærer: {getUserLabel(course.teacherId.toHexString())}</p>
+                  <p className="text-xs text-gray-600 mt-1">{course.description ?? 'Ingen beskrivelse'}</p>
                 </button>
                 {myRole === 'student' && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => handleLeaveCourse(course.id)}
-                    aria-label="Leave course"
-                    title="Leave course"
-                    className="absolute top-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:pointer-events-none"
-                  >
+                  <button type="button" disabled={pending} onClick={() => handleLeaveCourse(course.id)}
+                    aria-label="Meld av kurs" title="Meld av kurs"
+                    className="absolute top-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto disabled:opacity-50 disabled:pointer-events-none cursor-pointer">
                     <LeaveIcon />
                   </button>
                 )}
@@ -462,43 +386,27 @@ export default function TasksPage() {
           </div>
 
           <div className="rounded-xl border border-gray-200 p-6 bg-white space-y-3 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-gray-900">Tasks in selected course</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Oppgaver i valgt kurs</h2>
             {selectedCourse && myRole === 'teacher' && (
               <form onSubmit={handleCreateTask} className="grid gap-2 md:grid-cols-4 border border-gray-200 rounded-lg p-3">
-                <input
-                  className="border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Task title"
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                />
-                <input
-                  className="border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Points"
-                  value={taskPoints}
-                  onChange={(e) => setTaskPoints(e.target.value)}
-                />
-                <input
-                  className="border border-gray-300 rounded-lg px-3 py-2 md:col-span-2"
-                  placeholder="Task description"
-                  value={taskDescription}
-                  onChange={(e) => setTaskDescription(e.target.value)}
-                />
-                <button type="submit" disabled={pending} className="px-3 py-2 rounded-lg bg-gray-900 text-white md:col-span-4 disabled:opacity-60">
-                  Add task
+                <input className="border border-gray-300 rounded-lg px-3 py-2" placeholder="Oppgavetittel"
+                  value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} />
+                <input className="border border-gray-300 rounded-lg px-3 py-2" placeholder="Poeng"
+                  value={taskPoints} onChange={(e) => setTaskPoints(e.target.value)} />
+                <input className="border border-gray-300 rounded-lg px-3 py-2 md:col-span-2" placeholder="Oppgavebeskrivelse"
+                  value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} />
+                <button type="submit" disabled={pending}
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white md:col-span-4 disabled:opacity-60 cursor-pointer">
+                  Legg til oppgave
                 </button>
               </form>
             )}
-
-            {selectedCourseTasks.length === 0 && <p className="text-sm text-gray-600">No tasks for this course.</p>}
+            {selectedCourseTasks.length === 0 && <p className="text-sm text-gray-600">Ingen oppgaver for dette kurset.</p>}
             {selectedCourseTasks.map((task) => (
-              <button
-                type="button"
-                key={task.id.toString()}
-                onClick={() => setSelectedTaskId(task.id.toString())}
-                className={`w-full text-left p-3 rounded-lg border ${selectedTaskId === task.id.toString() ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}
-              >
+              <button type="button" key={task.id.toString()} onClick={() => setSelectedTaskId(task.id.toString())}
+                className={`w-full text-left p-3 rounded-lg border cursor-pointer ${selectedTaskId === task.id.toString() ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
                 <p className="font-medium text-gray-900">{task.title}</p>
-                <p className="text-xs text-gray-600">Points: {task.points.toString()} | {task.description ?? 'No details'}</p>
+                <p className="text-xs text-gray-600">Poeng: {task.points.toString()} | {task.description ?? 'Ingen detaljer'}</p>
               </button>
             ))}
           </div>
@@ -506,26 +414,21 @@ export default function TasksPage() {
 
         {selectedTask && (
           <section className="rounded-xl border border-gray-200 p-6 bg-white space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Task collaboration: {selectedTask.title}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Gruppesamarbeid: {selectedTask.title}</h2>
 
             {myRole === 'student' && (
               <>
                 <div className="border border-gray-200 rounded-lg p-3 flex items-center justify-between gap-3 group">
                   <div>
-                    <p className="font-medium text-gray-900">My group</p>
+                    <p className="font-medium text-gray-900">Min gruppe</p>
                     <p className="text-sm text-gray-600">
-                      {myTaskMembership ? myTaskMembership.group.name : 'Join or create a group to collaborate.'}
+                      {myTaskMembership ? myTaskMembership.group.name : 'Bli med i eller opprett en gruppe for å samarbeide.'}
                     </p>
                   </div>
                   {myTaskMembership && (
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => handleLeaveGroup(myTaskMembership.group.id)}
-                      aria-label="Leave group"
-                      title="Leave group"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:pointer-events-none"
-                    >
+                    <button type="button" disabled={pending} onClick={() => handleLeaveGroup(myTaskMembership.group.id)}
+                      aria-label="Forlat gruppe" title="Forlat gruppe"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto disabled:opacity-50 disabled:pointer-events-none cursor-pointer">
                       <LeaveIcon />
                     </button>
                   )}
@@ -533,36 +436,29 @@ export default function TasksPage() {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <form onSubmit={handleCreateGroup} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                    <p className="font-medium text-gray-900">Create group</p>
-                    <input
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="Group name"
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
-                    />
-                    <button type="submit" disabled={pending || !!myTaskMembership} className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60">
-                      Create and join
+                    <p className="font-medium text-gray-900">Opprett gruppe</p>
+                    <input className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Gruppenavn"
+                      value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                    <button type="submit" disabled={pending || !!myTaskMembership}
+                      className="px-3 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                      Opprett og bli med
                     </button>
                   </form>
 
                   <div className="border border-gray-200 rounded-lg p-3 space-y-2">
-                    <p className="font-medium text-gray-900">Join existing group</p>
-                    {selectedTaskGroups.length === 0 && <p className="text-sm text-gray-600">No groups yet.</p>}
+                    <p className="font-medium text-gray-900">Bli med i eksisterende gruppe</p>
+                    {selectedTaskGroups.length === 0 && <p className="text-sm text-gray-600">Ingen grupper ennå.</p>}
                     {selectedTaskGroups.map((group) => (
                       <div key={group.id.toString()} className="flex items-center justify-between border border-gray-200 rounded-lg p-2">
                         <div>
                           <p className="text-sm font-medium text-gray-900">{group.name}</p>
                           <p className="text-xs text-gray-600">
-                            Created by: {getUserLabel(group.createdBy.toHexString())} | Members: {groupMemberCounts.get(group.id.toString()) ?? 0}
+                            Opprettet av: {getUserLabel(group.createdBy.toHexString())} | Medlemmer: {groupMemberCounts.get(group.id.toString()) ?? 0}
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          disabled={pending || !!myTaskMembership}
-                          onClick={() => handleJoinGroup(group.id)}
-                          className="px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-sm disabled:opacity-60"
-                        >
-                          Join
+                        <button type="button" disabled={pending || !!myTaskMembership} onClick={() => handleJoinGroup(group.id)}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-sm disabled:opacity-60 cursor-pointer">
+                          Bli med
                         </button>
                       </div>
                     ))}
@@ -570,32 +466,24 @@ export default function TasksPage() {
                 </div>
 
                 <form onSubmit={handleSubmitTask} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                  <p className="font-medium text-gray-900">Submit group work</p>
+                  <p className="font-medium text-gray-900">Lever gruppearbeid</p>
                   <p className="text-xs text-gray-600">
-                    Your group: {myTaskMembership ? myTaskMembership.group.name : 'Join or create a group first'}
+                    Din gruppe: {myTaskMembership ? myTaskMembership.group.name : 'Bli med i eller opprett en gruppe først'}
                   </p>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    rows={4}
-                    placeholder="Paste your group answer, summary, or link."
-                    value={submissionText}
-                    onChange={(e) => setSubmissionText(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    disabled={pending || !myTaskMembership}
-                    className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60"
-                  >
-                    Submit task
+                  <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2" rows={4}
+                    placeholder="Lim inn gruppesvaret, sammendraget eller lenken her."
+                    value={submissionText} onChange={(e) => setSubmissionText(e.target.value)} />
+                  <button type="submit" disabled={pending || !myTaskMembership}
+                    className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                    Lever oppgave
                   </button>
                 </form>
               </>
             )}
 
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900">Submissions</h3>
-              {selectedTaskSubmissions.length === 0 && <p className="text-sm text-gray-600">No submissions yet.</p>}
-
+              <h3 className="font-semibold text-gray-900">Innleveringer</h3>
+              {selectedTaskSubmissions.length === 0 && <p className="text-sm text-gray-600">Ingen innleveringer ennå.</p>}
               {selectedTaskSubmissions.map((submission) => {
                 const group = groups.find((candidate) => candidate.id.toString() === submission.groupId.toString());
                 const grade = grades.find((candidate) => candidate.submissionId.toString() === submission.id.toString());
@@ -603,56 +491,28 @@ export default function TasksPage() {
                   score: grade?.score.toString() ?? '',
                   feedback: grade?.feedback ?? '',
                 };
-
                 return (
                   <div key={submission.id.toString()} className="border border-gray-200 rounded-lg p-3 space-y-2">
                     <p className="text-sm font-medium text-gray-900">
-                      Group: {group?.name ?? 'Unknown'} | Submitted: {formatMicros(submission.submittedAt.microsSinceUnixEpoch)}
+                      Gruppe: {group?.name ?? 'Ukjent'} | Levert: {formatMicros(submission.submittedAt.microsSinceUnixEpoch)}
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{submission.content}</p>
                     {grade && (
                       <p className="text-sm text-emerald-700">
-                        Grade: {grade.score.toString()} | Feedback: {grade.feedback}
+                        Karakter: {grade.score.toString()} | Tilbakemelding: {grade.feedback}
                       </p>
                     )}
-
                     {myRole === 'teacher' && (
                       <div className="grid gap-2 md:grid-cols-[140px_1fr_auto]">
-                        <input
-                          className="border border-gray-300 rounded-lg px-3 py-2"
-                          placeholder="Score"
+                        <input className="border border-gray-300 rounded-lg px-3 py-2" placeholder="Poeng"
                           value={draft.score}
-                          onChange={(e) =>
-                            setGradeDrafts((current) => ({
-                              ...current,
-                              [submission.id.toString()]: {
-                                ...draft,
-                                score: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                        <input
-                          className="border border-gray-300 rounded-lg px-3 py-2"
-                          placeholder="Feedback"
+                          onChange={(e) => setGradeDrafts((cur) => ({ ...cur, [submission.id.toString()]: { ...draft, score: e.target.value } }))} />
+                        <input className="border border-gray-300 rounded-lg px-3 py-2" placeholder="Tilbakemelding"
                           value={draft.feedback}
-                          onChange={(e) =>
-                            setGradeDrafts((current) => ({
-                              ...current,
-                              [submission.id.toString()]: {
-                                ...draft,
-                                feedback: e.target.value,
-                              },
-                            }))
-                          }
-                        />
-                        <button
-                          type="button"
-                          disabled={pending}
-                          onClick={() => handleGrade(submission.id)}
-                          className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60"
-                        >
-                          Save grade
+                          onChange={(e) => setGradeDrafts((cur) => ({ ...cur, [submission.id.toString()]: { ...draft, feedback: e.target.value } }))} />
+                        <button type="button" disabled={pending} onClick={() => handleGrade(submission.id)}
+                          className="px-4 py-2 rounded-lg bg-gray-900 text-white disabled:opacity-60 cursor-pointer">
+                          Lagre karakter
                         </button>
                       </div>
                     )}
