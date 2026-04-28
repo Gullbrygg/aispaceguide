@@ -26,7 +26,6 @@
   --shadow-strong: 0 24px 80px rgba(10, 10, 10, 0.14);
   --text-muted: #64748b;
 
-  /* Header / Footer tokens */
   --chrome: #ffffff;
   --chrome-muted: #f8fafc;
   --border-chrome: #e2e8f0;
@@ -34,7 +33,6 @@
   --accent-hover: #1d4ed8;
   --subtle: #94a3b8;
 
-  /* Section backgrounds */
   --section-dark: #0a0a0a;
   --section-mid: #f8fafc;
 }
@@ -55,7 +53,7 @@ body {
   display: none !important;
 }
 
-/* Map CSS variables to Tailwind-compatible utility classes */
+/* ─── Tailwind variable utilities ─── */
 .bg-chrome { background-color: var(--chrome); }
 .bg-chrome-muted { background-color: var(--chrome-muted); }
 .border-border-chrome { border-color: var(--border-chrome); }
@@ -67,8 +65,10 @@ body {
 .hover\:bg-accent-hover:hover { background-color: var(--accent-hover); }
 .border-accent { border-color: var(--accent); }
 .ring-accent { --tw-ring-color: var(--accent); }
+.text-accent { color: var(--accent); }
+.text-muted { color: var(--text-muted); }
 
-/* Glass */
+/* ─── Glass ─── */
 .glass {
   background: var(--surface);
   backdrop-filter: blur(20px);
@@ -106,10 +106,7 @@ body {
   border: 1px solid rgba(37, 99, 235, 0.15);
 }
 
-.text-accent { color: var(--accent); }
-.text-muted { color: var(--text-muted); }
-
-/* Typography — DM Serif Display for display headings */
+/* ─── Typography ─── */
 .font-display {
   font-family: 'DM Serif Display', Georgia, serif;
 }
@@ -141,11 +138,11 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Scroll-reveal animation */
+/* ─── Scroll-reveal ─── */
 @keyframes reveal-up {
   from {
     opacity: 0;
-    transform: translateY(32px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -155,49 +152,63 @@ body {
 
 @keyframes reveal-fade {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  33% { transform: translateY(-12px) rotate(1deg); }
-  66% { transform: translateY(-6px) rotate(-1deg); }
-}
-
-@keyframes mesh-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -20px) scale(1.05); }
-  66% { transform: translate(-20px, 15px) scale(0.97); }
-}
-
-@keyframes ticker {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.333%); }
-}
-
+/* Prevent invisible-element flash before JS fires */
 .reveal {
   opacity: 0;
+  will-change: opacity, transform;
 }
 
 .reveal.visible {
-  animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: reveal-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .reveal-fade {
   opacity: 0;
+  will-change: opacity;
 }
 
 .reveal-fade.visible {
-  animation: reveal-fade 0.8s ease forwards;
+  animation: reveal-fade 0.75s ease forwards;
 }
 
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
+/* If JS never fires (e.g. prerender), make content visible */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-fade {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
 
-/* Hero mesh blobs */
+.delay-1 { animation-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; }
+.delay-5 { animation-delay: 0.40s; }
+
+/* ─── Animations ─── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-12px) rotate(1deg); }
+  66%       { transform: translateY(-6px) rotate(-1deg); }
+}
+
+@keyframes mesh-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.05); }
+  66%       { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+/* ─── Hero mesh blobs ─── */
 .mesh-blob {
   position: absolute;
   border-radius: 50%;
@@ -206,7 +217,37 @@ body {
   pointer-events: none;
 }
 
-/* Stat counter */
+/* ─── Hero bottom fade — blends into the blue ticker ─── */
+.hero-fade-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.95));
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ─── Global focus styles (accessibility + polish) ─── */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ─── Selection highlight ─── */
+::selection {
+  background: rgba(37, 99, 235, 0.15);
+  color: #0a0a0a;
+}
+
+/* ─── Smooth scroll ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Stat counter ─── */
 .stat-number {
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: 3.5rem;
@@ -214,19 +255,19 @@ body {
   font-weight: 400;
 }
 
-/* Width limit */
+/* ─── Layout ─── */
 .width-limit {
-  @apply 
+  @apply
     max-w-7xl
-    mx-auto 
-    px-6 
-    lg:px-8 
-    transition-all 
+    mx-auto
+    px-6
+    lg:px-8
+    transition-all
     duration-200;
 }
 
 .header-button {
-  @apply 
+  @apply
     px-6
     py-2.5
     text-base
@@ -238,7 +279,7 @@ body {
 }
 
 .header-button-default {
-  @apply 
+  @apply
     text-gray-700
     hover:bg-gray-100
     hover:text-gray-900;

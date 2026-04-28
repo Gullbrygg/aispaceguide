@@ -6,6 +6,7 @@ import { Providers } from "@/app/providers";
 import "@/app/globals.css";
 import Footer from "@/app/Components/Footer";
 import Header from "@/app/Components/Header";
+import FloatingChat from "@/app/Components/FloatingChat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
               <Header />
               <main className="flex-1 w-full flex flex-col">{children}</main>
               <Footer />
+              <FloatingChat />
             </Providers>
           </ClerkTokenProvider>
         </body>

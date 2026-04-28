@@ -9,7 +9,7 @@ export default function TeacherPage() {
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 text-center">
           <h1 className="text-apple-lg text-gray-900 mb-6">Ressurser for Lærere</h1>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto font-light">
-            Verktøy og strategier for å veilede elever om ansvarlig AI-use
+            Verktøy og strategier for å veilede studenter om ansvarlig AI-bruk
           </p>
         </div>
       </section>
@@ -24,21 +24,21 @@ export default function TeacherPage() {
               tips: [
                 "Begynn med diskusjon om akseptabel vs. uakseptabel bruk",
                 "Del eksempler på både korrekt og feil AI-bruk",
-                "Be elevene diskutere scenarioer i grupper",
+                "Be studentene diskutere scenarioer i grupper",
               ],
             },
             {
               title: "Lag tydelige retningslinjer for oppgaver",
               tips: [
                 "Spesifiser hva som er tillatt AI-bruk for hver oppgave",
-                "Gi eksempler på hvordan elever kan bruke AI ansvarlig",
-                "Forklare konsekvensene av uakseptabel bruk",
+                "Gi eksempler på hvordan studenter kan bruke AI ansvarlig",
+                "Forklar konsekvensene av uakseptabel bruk",
               ],
             },
             {
-              title: "Vurder elevenes AI-bruk",
+              title: "Vurder studentenes AI-bruk",
               tips: [
-                "Be elevene dokumentere hvordan de brukte AI",
+                "Be studentene dokumentere hvordan de brukte AI",
                 "Spør om kilder og verifikasjonsmetoder",
                 "Vurder tanken bak AI-bruken, ikke bare resultatet",
               ],
@@ -46,9 +46,9 @@ export default function TeacherPage() {
             {
               title: "Faglig dialog om AI",
               tips: [
-                "Oppfordring til elevene til å dele erfaringer",
+                "Oppfordre studentene til å dele erfaringer",
                 "Diskuter nyere AI-trender og konsekvenser",
-                "Forbind AI-etikk med bredere samfunnsdebatten",
+                "Koble AI-etikk til bredere samfunnsdebatt",
               ],
             },
           ].map((strategy, idx) => (
@@ -104,7 +104,7 @@ export default function TeacherPage() {
             "Er det etisk å bruke AI til å lage innhold som presenteres som menneskelaget?",
             "Hvilke jobber eller ferdigheter blir mindre relevante med AI?",
             "Hvordan kan vi sikre at AI-bruk ikke forverrer ulikhet?",
-            "Hva betyr 'kritisk tenking' i en verden med AI?",
+            "Hva betyr «kritisk tenkning» i en verden med AI?",
             "Hvordan bør samfunnet regulere AI-teknologi?",
           ].map((prompt, idx) => (
             <div key={idx} className="glass p-6 rounded-2xl hover:bg-white transition-all">
@@ -119,9 +119,9 @@ export default function TeacherPage() {
         <h2 className="text-apple-md text-gray-900 mb-12">Ressurser for lærere</h2>
         <div className="space-y-4">
           {[
-            { title: "AIGuidebook Guidelines", url: "/guidelines" },
-            { title: "AI Ethics Quiz for Students", url: "/quiz" },
-            { title: "Student Scenarios", url: "/about/student" },
+            { title: "Retningslinjer for AI-bruk", url: "/guidelines" },
+            { title: "AI-etikk quiz for studenter", url: "/quiz" },
+            { title: "Scenarioer for studenter", url: "/about/student" },
           ].map((resource, idx) => (
             <Link
               key={idx}

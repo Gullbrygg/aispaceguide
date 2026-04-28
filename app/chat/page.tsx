@@ -12,7 +12,7 @@ type ChatMessageInput = {
 
 function formatTimestampMicros(micros: bigint): string {
   const date = new Date(Number(micros / 1000n));
-  return date.toLocaleString();
+  return date.toLocaleString('nb-NO');
 }
 
 export default function ChatPage() {
@@ -400,7 +400,7 @@ export default function ChatPage() {
 
   function handleNewChat() {
     if (pending) return;
-    createSessionAndWait('New chat').catch((err) => {
+    createSessionAndWait('Ny chat').catch((err) => {
       setError(err instanceof Error ? err.message : 'Failed to create chat');
     });
   }
@@ -408,7 +408,7 @@ export default function ChatPage() {
   const sidebarContent = (
     <>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-gray-900">Chats</h2>
+        <h2 className="font-semibold text-gray-900">Chatter</h2>
         <button
           type="button"
           onClick={handleNewChat}
@@ -422,7 +422,7 @@ export default function ChatPage() {
         <input
           value={inviteCodeInput}
           onChange={(e) => setInviteCodeInput(e.target.value)}
-          placeholder="Paste invite code to join"
+          placeholder="Lim inn invitasjonskode for å bli med"
           className="w-full rounded-xl border border-gray-200 px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
           disabled={pending}
         />
@@ -448,7 +448,7 @@ export default function ChatPage() {
 
       {latestInviteCode && (
         <p className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3 break-all">
-          Invite code: {latestInviteCode}
+          Invitasjonskode: {latestInviteCode}
         </p>
       )}
 
@@ -456,7 +456,7 @@ export default function ChatPage() {
         {(sessionsLoading || messagesLoading) && mySessions.length === 0 ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : mySessions.length === 0 ? (
-          <p className="text-sm text-gray-500">No chats yet.</p>
+          <p className="text-sm text-gray-500">Ingen chatter ennå.</p>
         ) : (
           mySessions.map((session) => {
             const selected = selectedSessionId === session.id.toString();
@@ -490,8 +490,8 @@ export default function ChatPage() {
                       type="button"
                       onClick={() => void handleRemoveSession(sessionIdText)}
                       disabled={pending}
-                      aria-label="Remove chat"
-                      title="Remove chat"
+                      aria-label="Slett chat"
+                      title="Slett chat"
                       className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -507,8 +507,8 @@ export default function ChatPage() {
                       type="button"
                       onClick={() => void handleLeaveSession(sessionIdText)}
                       disabled={pending}
-                      aria-label="Leave chat"
-                      title="Leave chat"
+                      aria-label="Forlat chat"
+                      title="Forlat chat"
                       className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-gray-200 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -532,9 +532,9 @@ export default function ChatPage() {
       <SignedOut>
         <div className="glass rounded-2xl p-8 text-center max-w-xl mx-auto mt-12">
           <h1 className="text-apple-md mb-4">AI Chat</h1>
-          <p className="text-gray-600 mb-6">Sign in to start a persistent chat and continue where you left off.</p>
+          <p className="text-gray-600 mb-6">Logg inn for å starte en samtale og fortsette der du slapp.</p>
           <SignInButton>
-            <button className="px-5 py-2 rounded-full bg-gray-950 text-white font-semibold cursor-pointer">Sign in</button>
+            <button className="px-5 py-2 rounded-full bg-gray-950 text-white font-semibold cursor-pointer">Logg inn</button>
           </SignInButton>
         </div>
       </SignedOut>
@@ -560,7 +560,7 @@ export default function ChatPage() {
             aria-hidden={!mobileSidebarOpen}
           >
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-gray-900">Chats & Invites</h2>
+              <h2 className="font-semibold text-gray-900">Chatter & invitasjoner</h2>
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(false)}
@@ -580,14 +580,14 @@ export default function ChatPage() {
                 onClick={() => setMobileSidebarOpen(true)}
                 className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium cursor-pointer"
               >
-                Chats & Invites
+                Chatter & invitasjoner
               </button>
               <button
                 type="button"
                 onClick={handleNewChat}
                 className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium cursor-pointer"
               >
-                New Chat
+                Ny chat
               </button>
             </div>
 
@@ -600,7 +600,7 @@ export default function ChatPage() {
             <div className="flex-1 overflow-auto space-y-3 pr-1">
               {myMessages.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center text-gray-500 px-8">
-                  Start a new conversation. Messages are saved in SpacetimeDB and available next time you log in.
+                  Start en ny samtale. Meldinger lagres og er tilgjengelige neste gang du logger inn.
                 </div>
               ) : (
                 myMessages.map((message) => {
@@ -626,14 +626,14 @@ export default function ChatPage() {
               {streamingAssistantText.length > 0 && (
                 <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white border border-gray-200 text-gray-900">
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">{streamingAssistantText}</p>
-                  <p className="text-[11px] mt-2 text-gray-500">Streaming...</p>
+                  <p className="text-[11px] mt-2 text-gray-500">Laster inn...</p>
                 </div>
               )}
             </div>
 
             {lastDroppedCount > 0 && (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
-                Context window reached: {lastDroppedCount} older message(s) were omitted for this response.
+                Kontekstvindu nådd: {lastDroppedCount} eldre melding(er) ble utelatt for dette svaret.
               </p>
             )}
 
@@ -645,7 +645,7 @@ export default function ChatPage() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={conn.isActive ? 'Ask anything...' : 'Connecting...'}
+                placeholder={conn.isActive ? 'Spør om hva som helst...' : 'Kobler til...'}
                 className="flex-1 rounded-xl border border-gray-200 px-4 py-3 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                 disabled={!conn.isActive || pending}
               />
@@ -654,7 +654,7 @@ export default function ChatPage() {
                 disabled={!conn.isActive || pending || input.trim().length === 0}
                 className="px-5 py-3 rounded-xl bg-gray-950 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {pending ? 'Sending...' : 'Send'}
+                {pending ? 'Sender...' : 'Send'}
               </button>
             </form>
           </section>
