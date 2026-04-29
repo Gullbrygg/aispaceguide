@@ -240,7 +240,7 @@ export default function Home() {
                 className={`reveal delay-${idx + 1} group block p-10 hover:bg-gray-50 transition-all duration-300`}
               >
                 <div className="font-display text-8xl font-light mb-6 leading-none"
-                  style={{ fontFamily: "'DM Serif Display', Georgia, serif", color: "rgba(37,99,235,0.10)", lineHeight: 1 }}>
+                  style={{ fontFamily: "'DM Serif Display', Georgia, serif", color: "rgba(37,99,235,0.30)", lineHeight: 1 }}>
                   {item.step}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">{item.title}</h3>

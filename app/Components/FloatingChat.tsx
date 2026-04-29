@@ -16,14 +16,13 @@ export default function FloatingChat() {
   const [pending, setPending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Don't render on the full chat page
-  if (pathname.startsWith("/chat")) return null;
-
   // Scroll to bottom when messages change
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
+
+  // Don't render on the full chat page
+  if (pathname.startsWith("/chat")) return null;
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
