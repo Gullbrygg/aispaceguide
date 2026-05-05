@@ -5,6 +5,7 @@ import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 import type { ChatMessage, ChatSession } from '@/src/module_bindings/types';
 import { useSpacetimeDB } from 'spacetimedb/react';
 import { ChatConsentNotice, useChatConsent } from '@/app/Components/ChatConsent';
+import MarkdownContent from '@/app/Components/MarkdownContent';
 
 type ChatMessageInput = {
   role: 'user' | 'assistant' | 'system';
@@ -621,7 +622,11 @@ export default function ChatPage() {
                           : 'bg-white border border-gray-200 text-gray-900'
                       }`}
                     >
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                      {fromUser ? (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                      ) : (
+                        <MarkdownContent content={message.content} />
+                      )}
                       <p className={`text-[11px] mt-2 ${fromUser ? 'text-blue-100' : 'text-gray-500'}`}>
                         {formatTimestampMicros(message.createdAt.microsSinceUnixEpoch)}
                       </p>
@@ -632,7 +637,7 @@ export default function ChatPage() {
 
               {streamingAssistantText.length > 0 && (
                 <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white border border-gray-200 text-gray-900">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{streamingAssistantText}</p>
+                  <MarkdownContent content={streamingAssistantText} />
                   <p className="text-[11px] mt-2 text-gray-500">Laster inn...</p>
                 </div>
               )}
