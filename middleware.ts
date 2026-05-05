@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { PUBLIC_ROUTES } from '@/lib/publicRoutes';
 
 const TEMP_BAN_DURATION_MS = 15 * 60 * 1000;
 
@@ -61,17 +62,7 @@ function banIp(ip: string): void {
   tempBannedIps.set(ip, Date.now() + TEMP_BAN_DURATION_MS);
 }
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/about',
-  '/about/(.*)',
-  '/guidelines',
-  '/quiz',
-  '/contact',
-  '/dashboard',
-  '/faq',
-
-]);
+const isPublicRoute = createRouteMatcher(PUBLIC_ROUTES);
 
 export default clerkMiddleware(async (auth, request) => {
   const pathname = request.nextUrl.pathname;

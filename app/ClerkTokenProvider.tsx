@@ -7,6 +7,8 @@ import React, {
   useState,
 } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { usePathname } from 'next/navigation';
+import { isPublicRoute } from '@/lib/publicRoutes';
 
 const TokenContext = createContext<string | undefined>(undefined);
 
@@ -30,6 +32,8 @@ export function ClerkTokenProvider({
   children: React.ReactNode;
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
+  const pathname = usePathname();
+  const isPublic = isPublicRoute(pathname ?? '');
 
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -75,6 +79,15 @@ export function ClerkTokenProvider({
         <p>Authentication error</p>
         <pre>{error.message}</pre>
       </div>
+    );
+  }
+
+  // On public routes, never block on Clerk — render immediately and let auth
+  // resolve in the background. The token populates via context once ready,
+  // and Providers (SpacetimeDB) will connect when it arrives.
+  if (isPublic) {
+    return (
+      <TokenContext.Provider value={value}>{children}</TokenContext.Provider>
     );
   }
 
