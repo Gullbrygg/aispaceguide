@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 import type { ChatMessage, ChatSession } from '@/src/module_bindings/types';
 import { useSpacetimeDB } from 'spacetimedb/react';
+import { ChatConsentNotice, useChatConsent } from '@/app/Components/ChatConsent';
 
 type ChatMessageInput = {
   role: 'user' | 'assistant' | 'system';
@@ -18,6 +19,7 @@ function formatTimestampMicros(micros: bigint): string {
 export default function ChatPage() {
   const conn = useSpacetimeDB();
   const myIdentityHex = conn.identity?.toHexString() ?? null;
+  const { accepted: consentAccepted, accept: acceptConsent, hydrated: consentHydrated } = useChatConsent();
 
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -540,6 +542,11 @@ export default function ChatPage() {
       </SignedOut>
 
       <SignedIn>
+        {consentHydrated && !consentAccepted ? (
+          <div className="glass rounded-2xl max-w-2xl mx-auto mt-12 overflow-hidden">
+            <ChatConsentNotice onAccept={acceptConsent} />
+          </div>
+        ) : (
         <div className="relative grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 h-full">
           <aside className="hidden md:flex glass rounded-2xl p-4 flex-col min-h-0">
             {sidebarContent}
@@ -659,6 +666,7 @@ export default function ChatPage() {
             </form>
           </section>
         </div>
+        )}
       </SignedIn>
     </div>
   );

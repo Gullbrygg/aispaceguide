@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import { ChatConsentNotice, useChatConsent } from "@/app/Components/ChatConsent";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -15,6 +16,7 @@ export default function FloatingChat() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { accepted: consentAccepted, accept: acceptConsent, hydrated: consentHydrated } = useChatConsent();
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -136,6 +138,12 @@ export default function FloatingChat() {
 
           {/* Body — logged in */}
           <SignedIn>
+            {consentHydrated && !consentAccepted ? (
+              <div className="flex-1 overflow-y-auto bg-white">
+                <ChatConsentNotice onAccept={acceptConsent} compact />
+              </div>
+            ) : (
+            <>
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50 min-h-0">
               {messages.length === 0 && (
@@ -201,6 +209,8 @@ export default function FloatingChat() {
                 </svg>
               </button>
             </form>
+            </>
+            )}
           </SignedIn>
         </div>
       )}
