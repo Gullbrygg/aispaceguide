@@ -14,16 +14,24 @@ export const onConnect = spacetimedb.clientConnected((ctx) => {
     throw new SenderError("Unauthorized: JWT is required to connect");
   }
   console.log(jwt);
-  // Restrict to your specific Clerk instance
-  if (!["https://active-mouse-40.clerk.accounts.dev", "https://auth.spacetimedb.com"].includes(jwt.issuer)) {
+  // Restrict to your specific Clerk instances (dev + prod) and SpacetimeDB
+  const allowedIssuers = [
+    "https://active-mouse-40.clerk.accounts.dev", // Clerk dev
+    "https://clerk.gullbrygg.com",                // Clerk prod
+    "https://auth.spacetimedb.com",
+  ];
+  if (!allowedIssuers.includes(jwt.issuer)) {
     throw new SenderError(`Unauthorized: unexpected issuer ${jwt.issuer}`);
   }
 
   // Check audience — ensures this token was minted FOR your app, not another
   // Clerk's default session token audience is your Frontend API URL
-  const expectedAudience = 'https://active-mouse-40.clerk.accounts.dev';
+  const allowedAudiences = [
+    "https://active-mouse-40.clerk.accounts.dev",
+    "https://clerk.gullbrygg.com",
+  ];
   const audiences = jwt.audience ?? [];
-  if (!audiences.includes(expectedAudience)) {
+  if (!audiences.some((a) => allowedAudiences.includes(a))) {
     console.log("AAAAAAAAAAA ======= Unauthorized: invalid audience: "+jwt.audience)
   //   throw new SenderError(`Unauthorized: invalid audience ` + jwt.audience);
   }
