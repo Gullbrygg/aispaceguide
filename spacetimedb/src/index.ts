@@ -492,7 +492,7 @@ export const create_chat_session = spacetimedb.reducer(
       id: 0n,
       ownerId: ctx.sender,
       clientRequestId,
-      title: trimmedTitle && trimmedTitle.length > 0 ? trimmedTitle.slice(0, 120) : 'New chat',
+      title: trimmedTitle && trimmedTitle.length > 0 ? trimmedTitle.slice(0, 120) : 'Ny chat',
       createdAt: now,
       updatedAt: now,
     });
@@ -645,7 +645,7 @@ export const save_chat_message = spacetimedb.reducer(
       ...session,
       updatedAt: ctx.timestamp,
       title:
-        session.title === 'New chat' && normalizedRole === 'user'
+        (session.title === 'New chat' || session.title === 'Ny chat') && normalizedRole === 'user'
           ? trimmedContent.slice(0, 72)
           : session.title,
     });
